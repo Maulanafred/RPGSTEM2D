@@ -36,6 +36,8 @@ public class dialogSystem : MonoBehaviour
 
     public GameObject skop;
 
+    public GameObject[] objecthehe;
+
     private string[] activeNameLines;
     private string[] activeDialogLines;
 
@@ -98,7 +100,10 @@ public class dialogSystem : MonoBehaviour
             skop.SetActive(false); // Aktifkan objek scope
             dialogText.text = "";
             nameText.text = "";
-            gameObject.SetActive(false);
+            for (int i = 0; i < objecthehe.Length; i++)
+            {
+                objecthehe[i].SetActive(false); // Nonaktifkan objek lain
+            }
             currentLine = 0; // Reset currentLine
             playerMovement.enabled = true; // Nonaktifkan PlayerMovement
             activeDialogLines = dialogLinesAfter;

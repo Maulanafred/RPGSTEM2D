@@ -4873,6 +4873,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   triggerChat: {fileID: 550127730}
+  dialogSystem: {fileID: 550127735}
 --- !u!70 &387941031
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -5312,6 +5313,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   triggerChat: {fileID: 550127730}
+  dialogSystem: {fileID: 0}
 --- !u!1 &410183017
 GameObject:
   m_ObjectHideFlags: 0
@@ -7661,7 +7663,7 @@ MonoBehaviour:
   nameLinesAfter:
   - Hana
   dialogLinesAfter:
-  - Gunakan teleskop dengan baik ya
+  - Gunakan alat ini dengan baik ya
   typingSpeed: 0.03
   nextGameObject: {fileID: 0}
   hasGotScope: 0
