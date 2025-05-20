@@ -3,32 +3,29 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-
     public static PlayerMovement instance;
+
     public float speed = 5f;
     [SerializeField] private InputActionReference inputActions;
 
     public Transform animalPosition;
 
+    private Rigidbody2D rb;
     private Vector2 moveInput;
-    private Animator animator;
+    public Animator animator;
     private string currentTrigger = "";
 
     void Awake()
     {
         instance = this;
+        rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
     }
 
     void Update()
     {
+        // Ambil input setiap frame
         moveInput = inputActions.action.ReadValue<Vector2>();
-
-
-
-
-        // Gerak
-        transform.Translate(moveInput * speed * Time.deltaTime);
 
         // Animasi
         if (moveInput.sqrMagnitude > 0.01f)
@@ -52,6 +49,13 @@ public class PlayerMovement : MonoBehaviour
                 currentTrigger = "idle";
             }
         }
+    }
+
+    void FixedUpdate()
+    {
+        // Gerak pakai Rigidbody biar tidak geter
+        Vector2 movement = moveInput * speed * Time.fixedDeltaTime;
+        rb.MovePosition(rb.position + movement);
     }
 
     string GetTriggerFromAngle(float angle)
@@ -78,6 +82,6 @@ public class PlayerMovement : MonoBehaviour
         animator.ResetTrigger("walkdownleft");
         animator.ResetTrigger("walkupright");
         animator.ResetTrigger("walkdownright");
-        animator.ResetTrigger("idle"); // tambahkan ini
+        animator.ResetTrigger("idle");
     }
 }
