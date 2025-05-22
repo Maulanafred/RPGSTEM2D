@@ -2,8 +2,9 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using Unity.VisualScripting;
 
-public class dialogSystem : MonoBehaviour
+public class dialogSystemNPCJem : MonoBehaviour
 {
     
     [Header("UI Komponen")]
@@ -14,6 +15,8 @@ public class dialogSystem : MonoBehaviour
     [SerializeField] private string[] nameLinesBefore;
     [TextArea(3, 5)]
     [SerializeField] private string[] dialogLinesBefore;
+
+    public JembatanManager jembatanManager; // Referensi ke JembatanManager
 
 
 
@@ -31,10 +34,9 @@ public class dialogSystem : MonoBehaviour
     private int currentLine = 0;
     private bool isTyping = false;
     private Coroutine typingCoroutine;
+    
+    public Button[] button; // Tombol untuk memulai dialog
 
-    public Button[] button;
-
-    public GameObject skop;
 
     public TextMeshProUGUI dialogTextMeshPro; // Referensi ke TextMeshProUGUI
 
@@ -47,15 +49,15 @@ public class dialogSystem : MonoBehaviour
 
     void Start()
     {
+        // mengdisable button
+        for (int i = 0; i < button.Length; i++)
+        {
+            button[i].interactable = false;
+        }
         playerMovement.animator.SetTrigger("idle");
         playerMovement.enabled = false; // Nonaktifkan PlayerMovement
         SetupDialog();
         ShowNextLine();
-
-                for (int i = 0; i < button.Length; i++)
-        {
-            button[i].interactable = false;
-        }
 
     }
 
@@ -95,9 +97,7 @@ public class dialogSystem : MonoBehaviour
         }
         else
         {
-            // Jika sudah mencapai akhir dialog ubah bool hasGotScope
-            hasGotScope = true;
-            skop.SetActive(false); // Aktifkan objek scope
+
 
             dialogTextMeshPro.text = dialogTextString; // Tampilkan teks dialog di TextMeshProUGUI
 
@@ -105,15 +105,25 @@ public class dialogSystem : MonoBehaviour
             {
                 objecthehe[i].SetActive(false); // Nonaktifkan objek lain
             }
-
-
-                    for (int i = 0; i < button.Length; i++)
-            {
-                button[i].interactable = true;
-            }
             currentLine = 0; // Reset currentLine
             playerMovement.enabled = true; // Nonaktifkan PlayerMovement
 
+            jembatanManager.woodCountText.text = $"{jembatanManager.woodCount} / {jembatanManager.maxWoodCount} kayu terkumpul"; // Tampilkan pesan bahwa jembatan sudah dibangun
+
+            
+            for (int i = 0; i < button.Length; i++)
+            {
+                button[i].interactable = true;
+            }
+            GameObject[] woodObjects = GameObject.FindGameObjectsWithTag("Wood");
+                foreach (GameObject wood in woodObjects)
+                {
+                    BoxCollider2D collider = wood.GetComponent<BoxCollider2D>();
+                    if (collider != null)
+                    {
+                        collider.enabled = true; // Aktifkan BoxCollider2D
+                    }
+                }
             if (nextGameObject != null)
             {
                 nextGameObject.SetActive(true); // Tampilkan objek berikutnya

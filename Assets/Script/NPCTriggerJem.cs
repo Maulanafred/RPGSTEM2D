@@ -1,13 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class NPCTrigger : MonoBehaviour
+public class NPCTriggerJem : MonoBehaviour
 {
     public GameObject triggerChat; // UI untuk tombol interaksi
 
+
     public GameObject dialogBox; // UI untuk dialog
-    public dialogSystem dialogSystem;
+    public dialogSystemNPCJem dialogSystem;
 
     private bool hasTriggered = false; // Melacak apakah trigger sudah dipicu
     private bool isPlayerInRange = false; // Melacak apakah pemain berada di area trigger
