@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Timeline;
+using UnityEngine.InputSystem;
 
 public class UIManagementGame : MonoBehaviour
 {
+
 
     public GameObject[] UIScope;
 
@@ -43,6 +45,7 @@ public class UIManagementGame : MonoBehaviour
 
     public void ActivateScope()
     {
+        playerMovement.animator.SetTrigger("idle"); // mengatur animasi idle player
         // z nya tidak berubah, karena scope tidak bisa bergerak maju mundur
         ScopePosition.position = new Vector3(player.position.x, player.position.y, ScopePosition.position.z); // mengatur posisi scope sesuai posisi player
         // mengakfitkan elemen UI scope
@@ -55,8 +58,13 @@ public class UIManagementGame : MonoBehaviour
             UIGame[i].SetActive(false);
         }
         playerMovement.enabled = false;
+
+        ControlModeManager.instance.SetScopeMode(true);
+
+
+
     }
-    
+
     public void DeactivateScope()
     {
         for (int i = 0; i < UIScope.Length; i++)
@@ -68,5 +76,14 @@ public class UIManagementGame : MonoBehaviour
             UIGame[i].SetActive(true);
         }
         playerMovement.enabled = true;
+        ControlModeManager.instance.SetScopeMode(false);
+
+
     }
+    
+
+
+
+
+
 }

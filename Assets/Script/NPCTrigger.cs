@@ -46,8 +46,5 @@ public class NPCTrigger : MonoBehaviour
         isPlayerInRange = false; // Nonaktifkan interaksi lebih lanjut
         triggerChat.SetActive(false); // Sembunyikan tombol interaksi
 
-        dialogSystem.playerMovement.enabled = false; // Nonaktifkan PlayerMovement
-        dialogSystem.playerMovement.animator.SetTrigger("idle");
-        dialogSystem.SetupDialog();
     }
 }

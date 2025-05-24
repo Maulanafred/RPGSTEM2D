@@ -25,7 +25,17 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         // Ambil input setiap frame
-        moveInput = inputActions.action.ReadValue<Vector2>();
+        if (!ControlModeManager.instance.isScopeMode) // hanya gerak jika bukan scope
+        {
+            moveInput = inputActions.action.ReadValue<Vector2>();
+
+            // Animasi dan arah
+            // ... (sama seperti sebelumnya)
+        }
+        else
+        {
+            moveInput = Vector2.zero; // reset input player saat scope
+        }
 
         // Animasi
         if (moveInput.sqrMagnitude > 0.01f)

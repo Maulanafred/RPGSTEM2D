@@ -15,7 +15,17 @@ public class ScopeFunction : MonoBehaviour
 
     void Update()
     {
-        moveInput = inputActions.action.ReadValue<Vector2>();
+        if (ControlModeManager.instance.isScopeMode)
+        {
+            moveInput = inputActions.action.ReadValue<Vector2>();
+
+            // Gerakkan kamera seperti biasa
+            // ...
+        }
+        else
+        {
+            moveInput = Vector2.zero; // reset input scope saat bukan mode scope
+        }
 
         if (cameraTarget != null && player != null)
         {
