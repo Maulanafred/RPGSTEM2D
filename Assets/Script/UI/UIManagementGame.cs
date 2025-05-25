@@ -4,9 +4,18 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Timeline;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using TMPro;
 
 public class UIManagementGame : MonoBehaviour
 {
+    public Button scopefunction;
+
+    public TextMeshProUGUI misiUtama;
+
+
+    public int totalMisi = 3; // total misi yang sudah diselesaikan
+    public int misiYangSudahDiselesaikan = 0; // misi yang sudah diselesaikan
 
 
     public GameObject[] UIScope;
@@ -79,6 +88,31 @@ public class UIManagementGame : MonoBehaviour
         ControlModeManager.instance.SetScopeMode(false);
 
 
+    }
+
+    public void AktifkanScope()
+    {
+
+
+        StartCoroutine(WaitAndActivateScope());
+
+    }
+
+    private IEnumerator WaitAndActivateScope()
+    {
+        yield return new WaitForSeconds(3.5f); // Tunggu 0.1 detik
+        scopefunction.interactable = true; // Nonaktifkan tombol scopefunction
+    }
+
+    public void UpdateMisiUtama()
+    {
+        misiUtama.text = "Temukan Hewan: " + misiYangSudahDiselesaikan + "/" + totalMisi;
+    }
+    
+    public void UpdateMisiUtama(int misiDiselesaikan)
+    {
+        misiYangSudahDiselesaikan += misiDiselesaikan;
+        UpdateMisiUtama();
     }
     
 

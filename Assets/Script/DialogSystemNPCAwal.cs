@@ -6,9 +6,14 @@ using UnityEngine.UI;
 public class DialogSystemNPCAwal : MonoBehaviour
 {
 
+
     [Header("UI Komponen")]
     [SerializeField] private TMP_Text dialogText;
     [SerializeField] private TMP_Text nameText;
+
+    public Animator animator;    
+
+    public GameObject bukuModul;
 
     [Header("Dialog Sebelum Scope")]
     [SerializeField] private string[] nameLinesBefore;
@@ -26,6 +31,8 @@ public class DialogSystemNPCAwal : MonoBehaviour
 
     public PlayerMovement playerMovement;
 
+    public UIManagementGame uiManagementGame; // Referensi ke UIManagementGame
+
     private int currentLine = 0;
     private bool isTyping = false;
     private Coroutine typingCoroutine;
@@ -39,6 +46,8 @@ public class DialogSystemNPCAwal : MonoBehaviour
 
     private string[] activeNameLines;
     private string[] activeDialogLines;
+
+    public TMP_Text MisiUtama; // Teks pertanyaan
 
     public string dialogTextString; // Variabel untuk menyimpan teks dialog
 
@@ -112,6 +121,12 @@ public class DialogSystemNPCAwal : MonoBehaviour
             {
                 nextGameObject.SetActive(true); // Tampilkan objek berikutnya
             }
+
+            bukuModul.SetActive(true); // Aktifkan buku modul
+
+            uiManagementGame.UpdateMisiUtama(1); // Update misi utama
+
+            animator.SetTrigger("Panduan"); // Panggil trigger animasi "panduan"
         }
     }
 

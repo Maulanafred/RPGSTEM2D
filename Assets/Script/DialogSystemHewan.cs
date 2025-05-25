@@ -2,6 +2,8 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System;
+using UnityEngine.InputSystem.LowLevel;
 
 public class DialogSystemHewan : MonoBehaviour
 {
@@ -9,6 +11,8 @@ public class DialogSystemHewan : MonoBehaviour
     [Header("UI Komponen")]
     [SerializeField] private TMP_Text dialogText;
     [SerializeField] private TMP_Text nameText;
+
+    public UIManagementGame uiManagementGame; // Referensi ke UIManagementGame
 
     [Header("Dialog Sebelum Scope")]
     [SerializeField] private string[] nameLinesBefore;
@@ -38,6 +42,10 @@ public class DialogSystemHewan : MonoBehaviour
 
 
     [Header("Soal Pilihan Ganda")]
+
+    public TextMeshProUGUI questionText; // Teks pertanyaan
+
+    public String questionTextString; // Variabel untuk menyimpan teks pertanyaan
     public GameObject questionPanel;
     public Button[] answerButtons; // 4 tombol untuk pilihan A, B, C, D
     public string[] answerChoices; // Isi teks pilihan (harus 4)
@@ -51,8 +59,12 @@ public class DialogSystemHewan : MonoBehaviour
 
     public string dialogTextString; // Variabel untuk menyimpan teks dialog
 
+
+    public string jawabanbenar;
+
     void Start()
     {
+        questionText.text= questionTextString; // Set teks pertanyaan
         playerMovement.animator.SetTrigger("idle");
         playerMovement.enabled = false; // Nonaktifkan PlayerMovement
         SetupDialog();
@@ -131,7 +143,6 @@ public class DialogSystemHewan : MonoBehaviour
     {
         questionPanel.SetActive(true);
         resultText.text = "";
-        dialogText.text = "🦌 Rusa: \"Yap! Yuk jawab dulu pertanyaan ini:\"";
 
         for (int i = 0; i < answerButtons.Length; i++)
         {
@@ -147,7 +158,7 @@ public class DialogSystemHewan : MonoBehaviour
         if (selectedIndex == correctAnswerIndex)
         {
             resultText.color = Color.green;
-            resultText.text = "✅ Jawaban Benar: Yesss! Rusa jantan memang punya tanduk. Selamat lanjut petualanganmu~";
+            resultText.text =  jawabanbenar; // Tampilkan jawaban benar
 
             for (int i = 0; i < answerButtons.Length; i++)
             {
@@ -169,6 +180,7 @@ public class DialogSystemHewan : MonoBehaviour
     {
         yield return new WaitForSeconds(2f); // Tunggu 1 detik sebelum mengakhiri dialog
         
+        uiManagementGame.UpdateMisiUtama(1); // Update misi utama
         BukuModul.instance.UnlockModul(0); // Unlocked modul hewan pertama
         foreach (var obj in objecthehe)
             obj.SetActive(false); // Nonaktifkan objek lain

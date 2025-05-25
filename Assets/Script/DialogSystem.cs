@@ -28,9 +28,15 @@ public class dialogSystem : MonoBehaviour
 
     public PlayerMovement playerMovement;
 
+    public UIManagementGame uiManagementGame; // Referensi ke UIManagementGame
+
+    public Animator animator; // Referensi ke Animator
+
     private int currentLine = 0;
     private bool isTyping = false;
     private Coroutine typingCoroutine;
+
+    public GameObject skopObjective; // Objek scope yang akan diaktifkan setelah dialog selesai
 
     public Button[] button;
 
@@ -99,6 +105,8 @@ public class dialogSystem : MonoBehaviour
             hasGotScope = true;
             skop.SetActive(false); // Aktifkan objek scope
 
+            skopObjective.SetActive(true); // Aktifkan objek skop objective
+
             dialogTextMeshPro.text = dialogTextString; // Tampilkan teks dialog di TextMeshProUGUI
 
             for (int i = 0; i < objecthehe.Length; i++)
@@ -107,7 +115,7 @@ public class dialogSystem : MonoBehaviour
             }
 
 
-                    for (int i = 0; i < button.Length; i++)
+            for (int i = 0; i < button.Length; i++)
             {
                 button[i].interactable = true;
             }
@@ -118,6 +126,10 @@ public class dialogSystem : MonoBehaviour
             {
                 nextGameObject.SetActive(true); // Tampilkan objek berikutnya
             }
+
+            uiManagementGame.AktifkanScope(); // Aktifkan scope di UIManagementGame
+            
+            animator.SetTrigger("Panduan"); // Panggil trigger animasi "panduan"
         }
     }
 
