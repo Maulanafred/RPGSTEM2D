@@ -13,6 +13,9 @@ public class UIManagementGame : MonoBehaviour
 
     public TextMeshProUGUI misiUtama;
 
+    public GameObject pauseMenu; // Referensi ke UI Pause Menu
+
+
 
     public int totalMisi = 3; // total misi yang sudah diselesaikan
     public int misiYangSudahDiselesaikan = 0; // misi yang sudah diselesaikan
@@ -40,6 +43,24 @@ public class UIManagementGame : MonoBehaviour
     void Update()
     {
 
+    }
+
+
+    // Fungsi untuk Pause Game
+    public void PauseGame()
+    {
+        playerMovement.animator.SetTrigger("idle");
+        Time.timeScale = 0f; // Hentikan waktu di game
+        pauseMenu.SetActive(true); // Tampilkan menu pause
+        playerMovement.enabled = false; // Nonaktifkan pergerakan player
+    }
+
+    // Fungsi untuk Resume Game
+    public void ResumeGame()
+    {
+        Time.timeScale = 1f; // Lanjutkan waktu di game
+        pauseMenu.SetActive(false); // Sembunyikan menu pause
+        playerMovement.enabled = true; // Aktifkan kembali pergerakan player
     }
 
     public void ShowObjective()
@@ -108,11 +129,18 @@ public class UIManagementGame : MonoBehaviour
     {
         misiUtama.text = "Temukan Hewan: " + misiYangSudahDiselesaikan + "/" + totalMisi;
     }
-    
+
     public void UpdateMisiUtama(int misiDiselesaikan)
     {
         misiYangSudahDiselesaikan += misiDiselesaikan;
         UpdateMisiUtama();
+    }
+    
+    public void MainMenu()
+    {
+        Time.timeScale = 1f; // Lanjutkan waktu di game
+        pauseMenu.SetActive(false); // Sembunyikan menu pause
+        SceneController.instance.LoadScene("Mainmenu"); // Kembali ke Main Menu
     }
     
 
