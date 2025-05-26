@@ -362,14 +362,15 @@ public class AudioManager : MonoBehaviour
     }
     
     public bool IsSFXPlaying(string groupName, int index)
+{
+    SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
+    if (group != null && index >= 0 && index < group.soundEffects.Length)
     {
-        SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
-        if (group != null && index >= 0 && index < group.soundEffects.Length)
-        {
-            return group.soundEffects[index].isPlaying;
-        }
-        return false;
+        return group.soundEffects[index].isPlaying;
     }
+    return false;
+}
+
 
     public void SetPlayOnAwakeAndPlay(string groupName, bool state)
     {
