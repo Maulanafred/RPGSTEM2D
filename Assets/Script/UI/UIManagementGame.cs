@@ -9,6 +9,10 @@ using TMPro;
 
 public class UIManagementGame : MonoBehaviour
 {
+
+    public GameObject misiUtamaPanel;
+
+    public GameObject syaratMisiPanel;
     public Button scopefunction;
 
     public TextMeshProUGUI misiUtama;
@@ -50,6 +54,7 @@ public class UIManagementGame : MonoBehaviour
     public void PauseGame()
     {
         playerMovement.animator.SetTrigger("idle");
+        AudioManager.Instance.PlaySFX("UI", 1); // Mainkan efek suara klik
         Time.timeScale = 0f; // Hentikan waktu di game
         pauseMenu.SetActive(true); // Tampilkan menu pause
         playerMovement.enabled = false; // Nonaktifkan pergerakan player
@@ -58,6 +63,7 @@ public class UIManagementGame : MonoBehaviour
     // Fungsi untuk Resume Game
     public void ResumeGame()
     {
+        AudioManager.Instance.PlaySFX("UI", 1); // Mainkan efek suara klik
         Time.timeScale = 1f; // Lanjutkan waktu di game
         pauseMenu.SetActive(false); // Sembunyikan menu pause
         playerMovement.enabled = true; // Aktifkan kembali pergerakan player
@@ -75,6 +81,7 @@ public class UIManagementGame : MonoBehaviour
 
     public void ActivateScope()
     {
+        AudioManager.Instance.PlaySFX("UI", 1); // Mainkan efek suara klik
         playerMovement.animator.SetTrigger("idle"); // mengatur animasi idle player
         // z nya tidak berubah, karena scope tidak bisa bergerak maju mundur
         ScopePosition.position = new Vector3(player.position.x, player.position.y, ScopePosition.position.z); // mengatur posisi scope sesuai posisi player
@@ -97,6 +104,7 @@ public class UIManagementGame : MonoBehaviour
 
     public void DeactivateScope()
     {
+        AudioManager.Instance.PlaySFX("UI", 1); // Mainkan efek suara klik
         for (int i = 0; i < UIScope.Length; i++)
         {
             UIScope[i].SetActive(false);
@@ -135,12 +143,28 @@ public class UIManagementGame : MonoBehaviour
         misiYangSudahDiselesaikan += misiDiselesaikan;
         UpdateMisiUtama();
     }
-    
+
     public void MainMenu()
     {
+        AudioManager.Instance.StopBackgroundMusicWithTransition("Gameplay1",0); // Hentikan musik latar belakang dengan transisi
+        AudioManager.Instance.PlaySFX("UI", 1); // Mainkan efek suara klik
         Time.timeScale = 1f; // Lanjutkan waktu di game
         pauseMenu.SetActive(false); // Sembunyikan menu pause
         SceneController.instance.LoadScene("Mainmenu"); // Kembali ke Main Menu
+    }
+
+
+    ///fungsi untuk buka dan tutu
+    ///
+    public void ToggleMisiUtamaPanel()
+    {
+        AudioManager.Instance.PlaySFX("UI", 1); // Mainkan efek suara klik
+        misiUtamaPanel.SetActive(!misiUtamaPanel.activeSelf); // Toggle visibility of the main mission panel
+    }
+    public void ToggleSyaratMisiPanel()
+    {
+        AudioManager.Instance.PlaySFX("UI", 1); // Mainkan efek suara klik
+        syaratMisiPanel.SetActive(!syaratMisiPanel.activeSelf); // Toggle visibility of the mission requirements panel
     }
     
 

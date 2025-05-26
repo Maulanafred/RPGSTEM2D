@@ -128,8 +128,9 @@ public class dialogSystem : MonoBehaviour
             }
 
             uiManagementGame.AktifkanScope(); // Aktifkan scope di UIManagementGame
-            
+
             animator.SetTrigger("Panduan"); // Panggil trigger animasi "panduan"
+            AudioManager.Instance.PlaySFX("UI", 0); // Mainkan efek suara klik
         }
     }
 
