@@ -1,40 +1,83 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
-public class AudioMuteHandler : MonoBehaviour
+public class AudioMute : MonoBehaviour
 {
-    public Sprite[] muteSprite; // Sprite untuk mute
-    public Image toggleButtonImage; // Referensi ke Image pada tombol
+    public Image muteButton; 
+    public Sprite muteIcon; 
+    public Sprite unmuteIcon; 
+    public TextMeshProUGUI buttonText; 
+    public AudioManager audioManager; 
 
-
-    public TextMeshProUGUI muteText; // Referensi ke TextMeshProUGUI untuk teks mute
+    // Key ini bisa jadi opsional jika Anda hanya mengandalkan state dari AudioManager
+    private const string MuteButtonStateKey = "MuteButtonState"; 
 
     private void Start()
     {
-        AudioManager.Instance.LoadVolumeSettings();
-        Debug.Log("IsMuted: " + AudioManager.Instance.IsMasterMuted());
-        UpdateMuteButtonSprite();
-    }
-
-
-    private void UpdateMuteButtonSprite()
-    {
-        toggleButtonImage.sprite = AudioManager.Instance.IsMasterMuted() ? muteSprite[1] : muteSprite[0];
-        muteText.text = AudioManager.Instance.IsMasterMuted() ? "Suara tidak aktif" : "suara aktif";
-        
-    }
-
-
-    
-    public void ButtonMute()
-    {
-        if (toggleButtonImage != null)
+        if (audioManager == null)
         {
-            AudioManager.Instance.ToggleMasterMute();
+            audioManager = AudioManager.Instance;
+            if (audioManager == null)
+            {
+                Debug.LogError("AudioManager tidak ditemukan! Pastikan AudioManager sudah ada di scene.");
+                enabled = false; // Nonaktifkan skrip ini jika AudioManager tidak ada
+                return;
+            }
+        }
+        // AudioManager.Start() akan memanggil LoadVolumeSettings,
+        // jadi mixer seharusnya sudah dalam keadaan yang benar.
+        // Kita hanya perlu mengupdate tampilan tombol.
 
-            UpdateMuteButtonSprite();
+        // Opsi 1: Selalu update tombol berdasarkan state aktual AudioManager
+        UpdateButtonText();
 
+        // Opsi 2: Jika Anda ingin tombol mengingat state mute/unmute-nya sendiri
+        // secara terpisah dari loading awal volume (misalnya, user klik mute, keluar, masuk lagi, tombol tetap mute)
+        // bool wasButtonMuted = PlayerPrefs.GetInt(MuteButtonStateKey, 0) == 1;
+        // if (audioManager.IsMasterMuted() != wasButtonMuted) {
+        //    // Ada diskrepansi, mungkin karena setting global berubah. Sinkronkan.
+        //    // Untuk simple, kita prioritaskan state dari AudioManager
+        // }
+        // UpdateButtonText();
+    }
+
+    // Awake bisa dihapus jika semua inisialisasi penting ada di Start
+    // private void Awake()
+    // {
+    // }
+
+    public void ToggleMute()
+    {
+        if (audioManager == null) return;
+
+        audioManager.ToggleMasterMute(); // AudioManager akan handle logika mute/unmute dan PlayerPrefs-nya
+
+        // Setelah toggle, update tampilan tombol berdasarkan state aktual dari AudioManager
+        UpdateButtonText();
+
+        // Simpan preferensi state tombol (opsional, tapi membantu konsistensi UI)
+        PlayerPrefs.SetInt(MuteButtonStateKey, audioManager.IsMasterMuted() ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
+    private void UpdateButtonText()
+    {
+        if (audioManager == null || muteButton == null || buttonText == null || muteIcon == null || unmuteIcon == null)
+        {
+            // Debug.LogWarning("Salah satu komponen UI atau AudioManager belum di-assign di AudioMute.");
+            return;
+        }
+
+        if (audioManager.IsMasterMuted())
+        {
+            muteButton.sprite = unmuteIcon; // Tombol menunjukkan aksi "Unmute"
+            buttonText.text = "Suara Tidak Aktif"; 
+        }
+        else
+        {
+            muteButton.sprite = muteIcon; // Tombol menunjukkan aksi "Mute"
+            buttonText.text = "Suara Aktif";
         }
     }
 }

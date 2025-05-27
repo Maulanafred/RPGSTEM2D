@@ -1,15 +1,10 @@
 using UnityEngine;
 using UnityEngine.Audio;
-using UnityEngine.UI;
-using System.Collections.Generic;
 using System.Collections;
-using UnityEngine.SceneManagement;
-
 
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
-
     public AudioMixer audioMixer;
 
     [System.Serializable]
@@ -24,23 +19,14 @@ public class AudioManager : MonoBehaviour
     {
         public string groupName;
         public AudioSource[] backgroundMusics;
-        [HideInInspector] public float originalVolume;
     }
 
     public SoundEffectGroup[] audioSFXGroups;
     public BackgroundMusicGroup[] audioBackgroundMusicGroups;
 
-    private Dictionary<AudioSource, bool> soundEffectStatus = new Dictionary<AudioSource, bool>();
-
     private const string MasterVolumeKey = "MasterVolume";
-    private const string BackgroundMusicKey = "BackgroundMusic";
-    private const string SoundEffectKey = "SoundEffect";
-
-    private void Start()
-    {
-        Instance = this;
-        LoadVolumeSettings();
-    }
+    private const string LastMasterVolumeKey = "LastMasterVolume"; // Untuk menyimpan volume sebelum mute
+    private const float MutedLinearVolume = 0.0001f; // Nilai linear yang dianggap mute
 
     private void Awake()
     {
@@ -49,21 +35,40 @@ public class AudioManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        
+        // LoadVolumeSettings dipanggil di Start untuk memastikan semua siap
+    }
 
+    private void Start()
+    {
+        // Pastikan Instance sudah diset dari Awake jika ini adalah instance pertama.
+        // Jika tidak, ini bisa jadi masalah jika ada instance lain yang tidak dihancurkan dengan benar.
+        if (Instance != this && Instance != null) { /* Sudah ada instance lain */ return; }
+        Instance = this; // Pastikan instance diset jika ini yang pertama
+
+        LoadVolumeSettings(); // Muat pengaturan volume saat game dimulai
     }
 
     public void LoadVolumeSettings()
     {
-        SetVolume(MasterVolumeKey, PlayerPrefs.GetFloat(MasterVolumeKey, 1f));
-        SetVolume(BackgroundMusicKey, PlayerPrefs.GetFloat(BackgroundMusicKey, 1f));
-        SetVolume(SoundEffectKey, PlayerPrefs.GetFloat(SoundEffectKey, 1f));
+        if (audioMixer == null)
+        {
+            Debug.LogError("AudioMixer belum diassign di AudioManager!");
+            return;
+        }
+        // Dapatkan nilai linear dari PlayerPrefs, default ke 1 (full volume)
+        float masterVolLinear = PlayerPrefs.GetFloat(MasterVolumeKey, 1f);
+        SetVolume(MasterVolumeKey, masterVolLinear, false); // Set volume tanpa menyimpan lagi ke PlayerPrefs saat load awal
     }
 
-    public void SetVolume(string parameter, float value)
+    // Overload SetVolume untuk kontrol penyimpanan ke PlayerPrefs
+    public void SetVolume(string parameter, float linearValue)
+    {
+        SetVolume(parameter, linearValue, true);
+    }
+    
+    public void SetVolume(string parameter, float linearValue, bool saveToPrefs)
     {
         if (audioMixer == null)
         {
@@ -71,55 +76,90 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        value = Mathf.Clamp(value, 0.0001f, 1f); // Hindari log(0)
-        float volumeDB = Mathf.Log10(value) * 20;
+        linearValue = Mathf.Clamp(linearValue, MutedLinearVolume, 1f); // Clamp nilai linear
 
-        if (!audioMixer.SetFloat(parameter, volumeDB))
+        float volumeDB;
+        if (linearValue <= MutedLinearVolume) // Jika nilai linear sangat kecil, anggap mute
         {
-            Debug.LogWarning($"Parameter {parameter} tidak ditemukan di Audio Mixer.");
+            volumeDB = -80f;
+        }
+        else
+        {
+            volumeDB = Mathf.Log10(linearValue) * 20f;
+        }
+        
+        audioMixer.SetFloat(parameter, volumeDB);
+
+        if (saveToPrefs)
+        {
+            PlayerPrefs.SetFloat(parameter, linearValue); // Simpan nilai linear yang digunakan
+            PlayerPrefs.Save(); // Simpan perubahan ke disk
+            // Debug.Log($"SetVolume: Saved {parameter} to PlayerPrefs with linear value {linearValue} (dB: {volumeDB})");
+        }
+        // else
+        // {
+        //     Debug.Log($"SetVolume: Applied {parameter} with linear value {linearValue} (dB: {volumeDB}) WITHOUT saving to PlayerPrefs");
+        // }
+    }
+
+    public void ToggleMasterMute()
+    {
+        if (audioMixer == null)
+        {
+            Debug.LogError("AudioMixer belum diassign untuk ToggleMasterMute!");
             return;
         }
 
-        PlayerPrefs.SetFloat(parameter, value);
-        PlayerPrefs.Save();
+        // Dapatkan nilai linear saat ini dari PlayerPrefs sebagai basis
+        float currentMasterLinear = PlayerPrefs.GetFloat(MasterVolumeKey, 1f);
+
+        if (currentMasterLinear <= MutedLinearVolume) // Jika saat ini dianggap mute (berdasarkan PlayerPrefs)
+        {
+            Debug.Log("Unmuting Master Volume");
+            // Unmute: Kembalikan ke volume terakhir sebelum mute
+            float lastVolumeLinear = PlayerPrefs.GetFloat(LastMasterVolumeKey, 1f); // Ambil volume terakhir, default 1 jika tidak ada
+            SetVolume(MasterVolumeKey, lastVolumeLinear); // SetVolume akan update mixer & PlayerPrefs[MasterVolumeKey]
+        }
+        else // Jika saat ini tidak mute
+        {
+            Debug.Log("Muting Master Volume");
+            // Mute: Simpan volume saat ini sebelum di-mute
+            PlayerPrefs.SetFloat(LastMasterVolumeKey, currentMasterLinear);
+            // Set master volume ke nilai mute (linear kecil), yang akan mengatur mixer ke -80dB
+            // dan menyimpan MutedLinearVolume ke PlayerPrefs[MasterVolumeKey]
+            SetVolume(MasterVolumeKey, MutedLinearVolume);
+        }
+        // PlayerPrefs.Save() sudah dihandle di dalam SetVolume jika saveToPrefs true
     }
 
+    public bool IsMasterMuted()
+    {
+        if (audioMixer == null) {
+            Debug.LogWarning("AudioMixer null in IsMasterMuted, returning true (assuming muted).");
+            return true; // Default ke muted jika mixer tidak ada
+        }
 
+        float currentVolumeDb;
+        if (audioMixer.GetFloat(MasterVolumeKey, out currentVolumeDb))
+        {
+            return currentVolumeDb <= -79f; // Gunakan toleransi sedikit, karena -80dB adalah absolut
+        }
+        
+        // Fallback jika GetFloat gagal: cek berdasarkan PlayerPrefs
+        Debug.LogWarning($"Could not get {MasterVolumeKey} from AudioMixer. Checking PlayerPrefs for mute state.");
+        return PlayerPrefs.GetFloat(MasterVolumeKey, 1f) <= MutedLinearVolume;
+    }
 
+    // ... (Fungsi PlaySFX, PlayBackgroundMusic, dll. tetap sama) ...
     #region Background Music Functions
 
-    // Stop semua musik latar belakang
-    public void StopAllBackgroundMusic()
-    {
-        foreach (BackgroundMusicGroup group in audioBackgroundMusicGroups)
-        {
-            foreach (AudioSource audioSource in group.backgroundMusics)
-            {
-                StartCoroutine(FadeOutAndStop(audioSource, 0.6f));
-            }
-        }
-    }
 
-    private IEnumerator FadeOutAndStop(AudioSource audioSource, float duration)
-    {
-        float startVolume = audioSource.volume;
-
-        for (float t = 0; t < duration; t += Time.deltaTime)
-        {
-            audioSource.volume = Mathf.Lerp(startVolume, 0, t / duration);
-            yield return null;
-        }
-
-        audioSource.Stop();
-        audioSource.volume = startVolume; // Kembalikan volume ke nilai awal jika diinginkan
-    }
-
-    public void PlayBackgroundMusicWithTransition(string groupName, int index, float fadeInDuration)
+    public void PlayBackgroundMusic(string groupName, int index)
     {
         BackgroundMusicGroup group = System.Array.Find(audioBackgroundMusicGroups, g => g.groupName == groupName);
         if (group != null && index >= 0 && index < group.backgroundMusics.Length)
         {
-            StartCoroutine(FadeInAndPlayBackgroundMusic(group.backgroundMusics[index], fadeInDuration));
+            group.backgroundMusics[index].Play();
         }
         else
         {
@@ -127,42 +167,23 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    IEnumerator FadeInAndPlayBackgroundMusic(AudioSource audioSource, float fadeInDuration)
-    {
-        audioSource.Play();
-        // Simpan volume awal
-        float startVolume = 0f;
 
-        // Set volume awal ke 0 untuk fade in
-        audioSource.volume = startVolume;
-
-        // Hitung target volume
-        float targetVolume = audioSource.volume;
-
-        // Hitung increment per frame
-        float deltaVolume = 1f / fadeInDuration;
-
-        // Fade in musik dengan menambahkan volume setiap frame
-        while (audioSource.volume < 1)
-        {
-            audioSource.volume += deltaVolume * Time.deltaTime;
-            yield return null;
-        }
-
-        // Pastikan volume tidak melebihi 1
-        audioSource.volume = Mathf.Clamp(audioSource.volume, 0f, 1f);
-
-        // Mainkan musik setelah selesai fade in
-
-    }
-
-
-    public void PlayBackgroundMusicWithTransition2(string groupName, int index, float fadeInDuration, float targetVolume)
+    public void StopBackgroundMusic(string groupName, int index)
     {
         BackgroundMusicGroup group = System.Array.Find(audioBackgroundMusicGroups, g => g.groupName == groupName);
         if (group != null && index >= 0 && index < group.backgroundMusics.Length)
         {
-            StartCoroutine(FadeInAndPlayBackgroundMusic(group.backgroundMusics[index], fadeInDuration, targetVolume));
+            group.backgroundMusics[index].Stop();
+        }
+    }
+
+
+    public void PlayBackgroundMusicWithTransition(string groupName, int index, float fadeDuration)
+    {
+        BackgroundMusicGroup group = System.Array.Find(audioBackgroundMusicGroups, g => g.groupName == groupName);
+        if (group != null && index >= 0 && index < group.backgroundMusics.Length)
+        {
+            StartCoroutine(FadeInAndPlay(group.backgroundMusics[index], fadeDuration));
         }
         else
         {
@@ -170,234 +191,98 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    IEnumerator FadeInAndPlayBackgroundMusic(AudioSource audioSource, float fadeInDuration, float targetVolume)
+
+    private IEnumerator FadeInAndPlay(AudioSource audioSource, float fadeDuration)
     {
+        audioSource.volume = 0f; // Set volume to 0 for fade in
         audioSource.Play();
-        float startVolume = 0f;
-        audioSource.volume = startVolume;
 
-        float deltaVolume = targetVolume / fadeInDuration;
+        float targetVolume = 1f; // Target volume
+        float currentTime = 0f;
 
-        while (audioSource.volume < targetVolume)
-        {
-            audioSource.volume += deltaVolume * Time.unscaledDeltaTime;
-            yield return null;
-        }
-
-        audioSource.volume = Mathf.Clamp(audioSource.volume, 0f, targetVolume);
-    }
-
-    public void StopBackgroundMusicWithTransition2(AudioSource audioSource, float fadeOutDuration)
-    {
-        StartCoroutine(FadeOutAndStopBackgroundMusic(audioSource, fadeOutDuration));
-    }
-
-    IEnumerator FadeOutAndStopBackgroundMusic(AudioSource audioSource, float fadeOutDuration)
-    {
-        float startVolume = audioSource.volume;
-        float deltaVolume = startVolume / fadeOutDuration;
-
-        while (audioSource.volume > 0)
-        {
-            audioSource.volume -= deltaVolume * Time.deltaTime;
-            yield return null;
-        }
-
-        audioSource.volume = 0f;
-        audioSource.Stop();
-    }
-
-
-    //pause background music
-    public void PauseBackgroundMusic(string groupName)
-    {
-        BackgroundMusicGroup group = System.Array.Find(audioBackgroundMusicGroups, g => g.groupName == groupName);
-        if (group != null)
-        {
-            group.originalVolume = group.backgroundMusics[0].volume;
-            StartCoroutine(FadeOutAndPause(group, 1f));
-        }
-    }
-
-    //resume background music with transition
-    public void ResumeBackgroundMusic(string groupName)
-    {
-        BackgroundMusicGroup group = System.Array.Find(audioBackgroundMusicGroups, g => g.groupName == groupName);
-        if (group != null)
-        {
-            StartCoroutine(FadeInAndResume(group, 1f));
-        }
-    }
-
-    private IEnumerator FadeOutAndPause(BackgroundMusicGroup group, float duration)
-    {
-        float currentTime = 0;
-        float startVolume = group.backgroundMusics[0].volume;
-
-        while (currentTime < duration)
+        while (currentTime < fadeDuration)
         {
             currentTime += Time.deltaTime;
-            foreach (AudioSource audioSource in group.backgroundMusics)
-            {
-                audioSource.volume = Mathf.Lerp(startVolume, 0, currentTime / duration);
-            }
+            audioSource.volume = Mathf.Lerp(0f, targetVolume, currentTime / fadeDuration);
             yield return null;
         }
-
-        foreach (AudioSource audioSource in group.backgroundMusics)
-        {
-            audioSource.Pause();
-        }
+        audioSource.volume = targetVolume; // Ensure volume is set to target
     }
-
-    private IEnumerator FadeInAndResume(BackgroundMusicGroup group, float duration)
-    {
-        foreach (AudioSource audioSource in group.backgroundMusics)
-        {
-            audioSource.UnPause();
-        }
-
-        float currentTime = 0;
-        float startVolume = group.originalVolume;
-
-        while (currentTime < duration)
-        {
-            currentTime += Time.deltaTime;
-            foreach (AudioSource audioSource in group.backgroundMusics)
-            {
-                audioSource.volume = Mathf.Lerp(0, startVolume, currentTime / duration);
-            }
-            yield return null;
-        }
-    }
-
-    public void StopBackgroundMusicWithTransition(string groupName, float fadeOutDuration)
+    
+    public void PlayBackgroundMusicWithTransition2(string groupName, int index, float fadeDuration, float targetVolume)
     {
         BackgroundMusicGroup group = System.Array.Find(audioBackgroundMusicGroups, g => g.groupName == groupName);
-        if (group != null)
+        if (group != null && index >= 0 && index < group.backgroundMusics.Length)
         {
-            foreach (AudioSource audioSource in group.backgroundMusics)
-            {
-                StartCoroutine(FadeOutBackgroundMusic(audioSource, fadeOutDuration));
-            }
+            StartCoroutine(FadeInAndPlay2(group.backgroundMusics[index], fadeDuration, targetVolume));
+        }
+        else
+        {
+            Debug.LogWarning("Background music group or index not found.");
         }
     }
+    private IEnumerator FadeInAndPlay2(AudioSource audioSource, float fadeDuration, float targetVolume)
+    {
+        audioSource.volume = 0f; // Set volume to 0 for fade in
+        audioSource.Play();
+        float currentTime = 0f;
+        while (currentTime < fadeDuration)
+        {
+            currentTime += Time.deltaTime;
+            audioSource.volume = Mathf.Lerp(0f, targetVolume, currentTime / fadeDuration);
+            yield return null;
+        }
+        audioSource.volume = Mathf.Clamp(targetVolume, 0f, 1f); // Ensure volume is set to target
+    }
 
-    IEnumerator FadeOutBackgroundMusic(AudioSource audioSource, float fadeOutDuration)
+    public void StopBackgroundMusicWithTransition(string groupName, int index, float fadeOutDuration)
+    {
+        BackgroundMusicGroup group = System.Array.Find(audioBackgroundMusicGroups, g => g.groupName == groupName);
+        if (group != null && index >= 0 && index < group.backgroundMusics.Length)
+        {
+            StartCoroutine(FadeOutAndStop(group.backgroundMusics[index], fadeOutDuration));
+        }
+        else
+        {
+            Debug.LogWarning("Background music group or index not found.");
+        }
+    }
+    private IEnumerator FadeOutAndStop(AudioSource audioSource, float fadeOutDuration)
     {
         float startVolume = audioSource.volume;
         float elapsedTime = 0f;
-
         while (elapsedTime < fadeOutDuration)
         {
-            elapsedTime += Time.unscaledDeltaTime;
+            elapsedTime += Time.deltaTime;
             audioSource.volume = Mathf.Lerp(startVolume, 0f, elapsedTime / fadeOutDuration);
             yield return null;
         }
-
         audioSource.volume = 0f;
         audioSource.Stop();
     }
-
-
-
-    // Fungsi untuk transisi ke musik latar belakang berdasarkan scene
-    public void TransitionToBackgroundMusic()
-    {
-        StopBackgroundMusicWithTransition("Battle", 1f);
-        ResumeBackgroundMusic(GetCurrentSceneMusic());
-    }
-
-
-    //fungsi untuk transisi ke musik battle berdasarkan scene
-    public void TransitionToBattleMusic()
-    {
-        PauseBackgroundMusic(GetCurrentSceneMusic());
-        PlayBackgroundMusicWithTransition("Battle", 0, 1f);
-    }
-
-    private string GetCurrentSceneMusic()
-    {
-        // Mengembalikan nama musik yang sesuai dengan scene saat ini
-        switch (SceneManager.GetActiveScene().name)
-        {
-            case "Gameplay1":
-                return "GameJakarta";
-            case "Gameplay2":
-                return "GameInvert";
-            case "Gameplay3":
-                return "GameBandung";
-            default:
-                return "DefaultMusic"; // Tambahkan nilai default untuk menghindari error
-        }
-    }
-
     #endregion
 
-
-
-    #region SFX Functions
+    #region Sound Effect Functions
 
     public void PlaySFX(string groupName, int index)
     {
         SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
         if (group != null && index >= 0 && index < group.soundEffects.Length)
         {
-            group.soundEffects[index].Play();
-        }
-    }
-
-    public void PlaySFXWithPitch(string groupName, int index, float pitch = 1.0f)
-    {
-        SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
-        if (group != null && index >= 0 && index < group.soundEffects.Length)
-        {
-            AudioSource audioSource = group.soundEffects[index];
-            if (audioSource != null)
+            AudioSource source = group.soundEffects[index];
+            // AudioClip clip = source.clip; // Tidak perlu jika AudioSource sudah punya clip
+            if (source.clip != null)
             {
-                audioSource.pitch = pitch; // Atur pitch
-                audioSource.Play();
+                source.PlayOneShot(source.clip);
+            } else {
+                Debug.LogWarning($"SFX {groupName}[{index}] tidak memiliki AudioClip.");
             }
         }
-    }
-    
-    public bool IsSFXPlaying(string groupName, int index)
-{
-    SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
-    if (group != null && index >= 0 && index < group.soundEffects.Length)
-    {
-        return group.soundEffects[index].isPlaying;
-    }
-    return false;
-}
-
-
-    public void SetPlayOnAwakeAndPlay(string groupName, bool state)
-    {
-        SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
-        if (group != null)
+        else
         {
-            foreach (AudioSource sfx in group.soundEffects)
-            {
-                sfx.playOnAwake = state;
-
-                if (state)
-                {
-                    sfx.Stop(); // Hentikan suara dulu agar bisa di-reset ke awal
-                    sfx.time = 0; // Reset waktu audio ke awal
-                    sfx.Play();  // Mainkan kembali dari awal
-                }
-                else
-                {
-                    sfx.Stop(); // Hentikan suara
-                }
-            }
+            Debug.LogWarning("Sound effect group or index not found.");
         }
     }
-
-
-
-
 
     public void StopSFX(string groupName, int index)
     {
@@ -407,146 +292,15 @@ public class AudioManager : MonoBehaviour
             group.soundEffects[index].Stop();
         }
     }
-
-    //stop sfx group
-
-    public void StopSFXGroup(string groupName)
-    {
-        SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
-        if (group != null)
-        {
-            foreach (AudioSource sfx in group.soundEffects)
-            {
-                sfx.Stop();
-            }
-        }
-    }
-
-    // Fungsi untuk memainkan suara efek dengan rate 10% untuk boss yang kena hit 
-    public void PlaySFXWithChance(string groupName, int index, float chance)
-    {
-        if (Random.value <= chance)
-        {
-            PlaySFX(groupName, index);
-        }
-    }
-
-    // Stop semua suara efek
-    public void StopSpesificSFX(){
-        StopSFXGroup("AttackPlayer");
-        StopSFXGroup("Skillplayer");
-        StopSFXGroup("RangedAttack");
-        StopSFXGroup("SkillBoss");
-        StopSFXGroup("BossDukun");
-
-    }
-
-    // Example usage for boss hit with a 10% chance
-    public void PlayBossHitSFX(string groupName, int index)
-    {
-        PlaySFXWithChance(groupName, index, 0.1f);
-    }
     
-    #endregion
-
-    #region Mute Functions
-
-    public void ToggleMasterMute()
-    {
-        float currentVolume = 0f;
-        audioMixer.GetFloat("MasterVolume", out currentVolume);
-
-        if (currentVolume <= -80f)
-        {
-            // Toggle mute menjadi tidak terdengar
-            audioMixer.SetFloat("MasterVolume", 0f);
-        }
-        else
-        {
-            // Toggle mute menjadi terdengar
-            audioMixer.SetFloat("MasterVolume", -80f);
-        }
-
-        PlayerPrefs.SetFloat(MasterVolumeKey, currentVolume <= -80f ? 0f : currentVolume);
-        PlayerPrefs.Save();
-    }
-
-    public bool IsMasterMuted()
-    {
-        float currentVolume = 0f;
-        audioMixer.GetFloat("MasterVolume", out currentVolume);
-        return currentVolume <= -80f;
-    }
-
-    #endregion
-
-
-    #region Sound Effect Group Functions
-
-    public void PauseSoundEffectGroup(string groupName)
+    public bool IsSFXPlaying(string groupName, int index)
     {
         SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
-        if (group != null)
+        if (group != null && index >= 0 && index < group.soundEffects.Length)
         {
-            foreach (AudioSource sfx in group.soundEffects)
-            {
-                if (sfx.isPlaying)
-                {
-                    soundEffectStatus[sfx] = true; // Menyimpan status play/pause sebelumnya
-                    sfx.Pause();
-                }
-            }
+            return group.soundEffects[index].isPlaying;
         }
-        else
-        {
-            Debug.LogWarning("Sound effect group not found.");
-        }
+        return false;
     }
-
-    public void ResumeSoundEffectGroup(string groupName)
-    {
-        SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
-        if (group != null)
-        {
-            foreach (AudioSource sfx in group.soundEffects)
-            {
-                if (soundEffectStatus.ContainsKey(sfx) && soundEffectStatus[sfx])
-                {
-                    sfx.UnPause(); // Mengembalikan status play/pause sebelumnya
-                }
-            }
-        }
-        else
-        {
-            Debug.LogWarning("Sound effect group not found.");
-        }
-    }
-
-    public void PauseSFX(){
-        PauseSoundEffectGroup("AttackPlayer");
-        PauseSoundEffectGroup("Skillplayer");
-        PauseSoundEffectGroup("RangedAttack");
-        PauseSoundEffectGroup("SkillBoss");
-        PauseSoundEffectGroup("BossDukun");
-    }
-
-    public void ResumeSFX(){
-        ResumeSoundEffectGroup("AttackPlayer");
-        ResumeSoundEffectGroup("Skillplayer");
-        ResumeSoundEffectGroup("RangedAttack");
-        PauseSoundEffectGroup("SkillBoss");
-        PauseSoundEffectGroup("BossDukun");
-    }
-
-    internal void PlaySFX(string v)
-    {
-        throw new System.NotImplementedException();
-    }
-
     #endregion
-
 }
-
-
-    
-

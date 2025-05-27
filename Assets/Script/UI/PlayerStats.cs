@@ -6,6 +6,8 @@ public class PlayerStats : MonoBehaviour
 {
     public static PlayerStats instance;
 
+    public UIManagementGame uiManagementGame;
+
     [Header("Nyawa")]
     public float maxHealth = 100f;
     public float currentHealth;
@@ -17,6 +19,7 @@ public class PlayerStats : MonoBehaviour
     public float expToNextLevel = 100f;
     public Image expBar;
     public TMP_Text levelText;
+
 
     void Awake()
     {
@@ -43,10 +46,13 @@ public class PlayerStats : MonoBehaviour
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
         UpdateUI();
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0 && uiManagementGame.isGameOver == false)
+
         {
-            Debug.Log("Player Mati");
-            // bisa panggil GameOver di sini
+            currentHealth = 0; // Pastikan health tidak negatif
+            uiManagementGame.ShowGameOverPanel();
+            
+
         }
     }
 

@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &531332350896037395
+--- !u!1 &3911248926542278911
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,22 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6163714354956561527}
-  - component: {fileID: 4819980724106943293}
+  - component: {fileID: 2208470261747311788}
+  - component: {fileID: 169649610414638615}
   m_Layer: 0
-  m_Name: FireballSFX
+  m_Name: UIClick (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6163714354956561527
+--- !u!4 &2208470261747311788
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 531332350896037395}
+  m_GameObject: {fileID: 3911248926542278911}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -32,17 +32,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!82 &4819980724106943293
+--- !u!82 &169649610414638615
 AudioSource:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 531332350896037395}
+  m_GameObject: {fileID: 3911248926542278911}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 24300002, guid: b4c34fc9f7b5ea74894790669ed13562, type: 2}
-  m_audioClip: {fileID: 8300000, guid: bf335abc8bd01c14c95ab46eb13feac8, type: 3}
+  OutputAudioMixerGroup: {fileID: 3609623984525975570, guid: 5ad1d2f1fa150a5409cca0d0186ffcbf, type: 2}
+  m_audioClip: {fileID: 8300000, guid: 127eb919118632e40955b18438e6156c, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1

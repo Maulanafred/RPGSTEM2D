@@ -67,6 +67,7 @@ public class DialogSystemHewan : MonoBehaviour
         questionText.text= questionTextString; // Set teks pertanyaan
         playerMovement.animator.SetTrigger("idle");
         playerMovement.enabled = false; // Nonaktifkan PlayerMovement
+        AudioManager.Instance.StopSFX("Player",0); // Mainkan efek suara klik
         SetupDialog();
         ShowNextLine();
 

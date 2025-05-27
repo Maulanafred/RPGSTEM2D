@@ -7,14 +7,14 @@ public class PlayerMovement : MonoBehaviour
     public static PlayerMovement instance;
 
     public float speed = 5f;
-    [SerializeField] private InputActionReference inputActions;
+    [SerializeField] public InputActionReference inputActions;
 
     public Transform animalPosition;
 
     private Rigidbody2D rb;
     private Vector2 moveInput;
     public Animator animator;
-    private string currentTrigger = "";
+    public string currentTrigger = "";
 
 
     public GameObject fireballPrefab;
@@ -40,32 +40,46 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-// Ambil input setiap frame
-    if (!ControlModeManager.instance.isScopeMode) // hanya gerak jika bukan scope
-    {
-        moveInput = inputActions.action.ReadValue<Vector2>();
-
-        // Animasi dan arah
-        if (moveInput.sqrMagnitude > 0.01f)
+        // Ambil input setiap frame
+        if (!ControlModeManager.instance.isScopeMode) // hanya gerak jika bukan scope
         {
-            float angle = Mathf.Atan2(moveInput.y, moveInput.x) * Mathf.Rad2Deg;
-            string trigger = GetTriggerFromAngle(angle);
+            moveInput = inputActions.action.ReadValue<Vector2>();
 
-            if (trigger != currentTrigger)
+            // Animasi dan arah
+            if (moveInput.sqrMagnitude > 0.01f)
             {
-                ResetAllTriggers();
-                animator.SetTrigger(trigger);
-                currentTrigger = trigger;
+                float angle = Mathf.Atan2(moveInput.y, moveInput.x) * Mathf.Rad2Deg;
+                string trigger = GetTriggerFromAngle(angle);
+
+                if (trigger != currentTrigger)
+                {
+                    ResetAllTriggers();
+                    animator.SetTrigger(trigger);
+                    currentTrigger = trigger;
+                }
+
+                // Pastikan sound walk hanya diputar sekali
+                if (!AudioManager.Instance.IsSFXPlaying("Player", 0))
+                {
+                    AudioManager.Instance.PlaySFX("Player", 0);
+                }
             }
-
-            // Pastikan sound walk hanya diputar sekali
-            if (!AudioManager.Instance.IsSFXPlaying("Player", 0))
+            else
             {
-                AudioManager.Instance.PlaySFX("Player", 0);
+                if (currentTrigger != "idle")
+                {
+                    ResetAllTriggers();
+                    animator.SetTrigger("idle");
+                    currentTrigger = "idle";
+                }
+
+                // Hentikan sound walk saat karakter berhenti
+                AudioManager.Instance.StopSFX("Player", 0);
             }
         }
         else
         {
+            moveInput = Vector2.zero; // reset input player saat scope
             if (currentTrigger != "idle")
             {
                 ResetAllTriggers();
@@ -73,23 +87,9 @@ public class PlayerMovement : MonoBehaviour
                 currentTrigger = "idle";
             }
 
-            // Hentikan sound walk saat karakter berhenti
+            // Hentikan sound walk saat scope mode aktif
             AudioManager.Instance.StopSFX("Player", 0);
         }
-    }
-    else
-    {
-        moveInput = Vector2.zero; // reset input player saat scope
-        if (currentTrigger != "idle")
-        {
-            ResetAllTriggers();
-            animator.SetTrigger("idle");
-            currentTrigger = "idle";
-        }
-
-        // Hentikan sound walk saat scope mode aktif
-        AudioManager.Instance.StopSFX("Player", 0);
-    }
 
 
         //Jika player menekan J atau K pada keyboard
@@ -100,13 +100,30 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-    public void PlayerAttack()
+public void PlayerAttack()
+{
+    if (!isAttacking)
     {
-        if (!isAttacking)
+        Transform nearestEnemy = FindNearestEnemy(10f); // Cari musuh dalam jarak 5 unit
+        if (nearestEnemy != null)
         {
-            StartCoroutine(Attack());
+            Vector2 directionToEnemy = (nearestEnemy.position - transform.position).normalized;
+
+            // Atur animasi menghadap ke arah musuh
+            float angle = Mathf.Atan2(directionToEnemy.y, directionToEnemy.x) * Mathf.Rad2Deg;
+            string trigger = GetTriggerFromAngle(angle);
+            ResetAllTriggers();
+            animator.SetTrigger(trigger);
+            currentTrigger = trigger;
+
+            StartCoroutine(Attack(directionToEnemy)); // Serang ke arah musuh
+        }
+        else
+        {
+            Debug.Log("Tidak ada musuh dalam jarak serangan.");
         }
     }
+}
 
     void FixedUpdate()
     {
@@ -115,7 +132,7 @@ public class PlayerMovement : MonoBehaviour
         rb.MovePosition(rb.position + movement);
     }
 
-    string GetTriggerFromAngle(float angle)
+    public string GetTriggerFromAngle(float angle)
     {
         if (angle >= 60 && angle < 120)
             return "walkup";
@@ -141,60 +158,72 @@ public class PlayerMovement : MonoBehaviour
         animator.ResetTrigger("walkdownright");
         animator.ResetTrigger("idle");
     }
-    
 
 
-    IEnumerator Attack()
+
+IEnumerator Attack(Vector2 attackDir)
+{
+    isAttacking = true;
+
+    if (attackDir != Vector2.zero)
     {
-        isAttacking = true;
+        GameObject attackSound = Instantiate(charAttackSoundSFX, transform.position, Quaternion.identity);
+        GameObject fireballSound = Instantiate(fireballSoundSFX, transform.position, Quaternion.identity);
 
-        // --- Main Sound Effect ---
-        
+        Destroy(fireballSound, 2f); // Hancurkan sound effect setelah 2 detik
+        Destroy(attackSound, 2f); // Hancurkan sound effect setelah 2 detik
 
+        float angle = Mathf.Atan2(attackDir.y, attackDir.x) * Mathf.Rad2Deg;
 
-        Vector2 attackDir = moveInput.normalized;
+        // --- Posisi dan rotasi Staff ---
+        float staffOffset = 1.5f;
+        Vector3 staffPos = transform.position + (Vector3)(attackDir * staffOffset);
+        staffObject.transform.position = staffPos;
+        staffObject.transform.rotation = Quaternion.Euler(0, 0, angle);
+        staffObject.SetActive(true);
 
-        if (attackDir != Vector2.zero)
+        // --- Flip staff secara horizontal agar tidak terbalik di kiri ---
+        SpriteRenderer sr = staffObject.GetComponent<SpriteRenderer>();
+        if (sr != null)
         {
-            GameObject attackSound = Instantiate(charAttackSoundSFX, transform.position, Quaternion.identity);
-
-            GameObject fireballSound = Instantiate(fireballSoundSFX, transform.position, Quaternion.identity);
-
-            Destroy(fireballSound, 2f); // Hancurkan sound effect setelah 2 detik
-
-            Destroy(attackSound, 2f); // Hancurkan sound effect setelah 1 detik
-            float angle = Mathf.Atan2(attackDir.y, attackDir.x) * Mathf.Rad2Deg;
-
-            // --- Posisi dan rotasi Staff ---
-            float staffOffset = 1.5f;
-            Vector3 staffPos = transform.position + (Vector3)(attackDir * staffOffset);
-            staffObject.transform.position = staffPos;
-            staffObject.transform.rotation = Quaternion.Euler(0, 0, angle);
-            staffObject.SetActive(true);
-
-            // --- Flip staff secara horizontal agar tidak terbalik di kiri ---
-            SpriteRenderer sr = staffObject.GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                sr.flipY = (attackDir.x < 0); // flip kalau mengarah ke kiri
-            }
-
-            // --- FirePoint Posisi dan Arah ---
-            float fireOffset = 1.2f;
-            firePoint.position = transform.position + (Vector3)(attackDir * fireOffset);
-            firePoint.right = attackDir;
-
-            // --- Tembak Fireball ---
-            GameObject fireball = Instantiate(fireballPrefab, firePoint.position, Quaternion.Euler(0, 0, angle));
-            Rigidbody2D fireballRb = fireball.GetComponent<Rigidbody2D>();
-            fireballRb.velocity = attackDir * fireballSpeed;
-
-            Destroy(fireball, 4f);
+            sr.flipY = (attackDir.x < 0); // flip kalau mengarah ke kiri
         }
 
-        yield return new WaitForSeconds(0.5f); // cooldown
-        staffObject.SetActive(false);
-        isAttacking = false;
+        // --- FirePoint Posisi dan Arah ---
+        float fireOffset = 1.2f;
+        firePoint.position = transform.position + (Vector3)(attackDir * fireOffset);
+        firePoint.right = attackDir;
+
+        // --- Tembak Fireball ---
+        GameObject fireball = Instantiate(fireballPrefab, firePoint.position, Quaternion.Euler(0, 0, angle));
+        Rigidbody2D fireballRb = fireball.GetComponent<Rigidbody2D>();
+        fireballRb.velocity = attackDir * fireballSpeed;
+
+        Destroy(fireball, 4f);
+    }
+
+    yield return new WaitForSeconds(0.5f); // cooldown
+    staffObject.SetActive(false);
+    isAttacking = false;
+}
+    
+    private Transform FindNearestEnemy(float range)
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Mushroom");
+        Transform nearestEnemy = null;
+        float shortestDistance = range;
+
+        foreach (GameObject enemy in enemies)
+        {
+            float distance = Vector2.Distance(transform.position, enemy.transform.position);
+            if (distance < shortestDistance)
+            {
+                shortestDistance = distance;
+                nearestEnemy = enemy.transform;
+            }
+        }
+
+        return nearestEnemy;
     }
 
 

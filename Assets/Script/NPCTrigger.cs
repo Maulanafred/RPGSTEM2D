@@ -41,6 +41,8 @@ public class NPCTrigger : MonoBehaviour
 
     public void StartDialog()
     {
+
+        AudioManager.Instance.StopSFX("Player",0); // Mainkan efek suara klik
         AudioManager.Instance.PlaySFX("Player",1); // Mainkan efek suara klik
         dialogBox.SetActive(true); // Tampilkan UI dialog
         hasTriggered = true; // Tandai bahwa trigger sudah dipicu

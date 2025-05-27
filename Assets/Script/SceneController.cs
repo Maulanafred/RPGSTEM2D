@@ -37,8 +37,8 @@ public class SceneController : MonoBehaviour
     public IEnumerator StartSceneTransition(string sceneName)
     {
 
-    
-            
+
+
         animatorSceneTransition.SetTrigger("peteng"); // Trigger animasi transisi
 
         yield return new WaitForSeconds(1f); // Tunggu selama 1 detik sebelum memuat scene baru
@@ -69,5 +69,5 @@ public class SceneController : MonoBehaviour
         }
     }
 
-
 }
+    

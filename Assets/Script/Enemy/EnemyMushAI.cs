@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class EnemyMushAI : MonoBehaviour
 {
@@ -16,6 +17,9 @@ public class EnemyMushAI : MonoBehaviour
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
 
+    private bool isAttacking = false; // Flag untuk memastikan musuh tidak terus berganti animasi
+
+    public bool isBlocked = false; // Flag untuk menghentikan pergerakan sementara
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
@@ -23,39 +27,59 @@ public class EnemyMushAI : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>(); // Tambahkan SpriteRenderer
     }
 
-    void Update()
+
+
+void Update()
+{
+    if (player == null) return;
+
+    if (isBlocked) // Jika musuh sedang diblokir, hentikan pergerakan
     {
-        if (player == null) return;
+        rb.velocity = Vector2.zero; // Hentikan pergerakan
+        animator.SetBool("run", false);
+        return;
+    }
 
-        float distance = Vector2.Distance(transform.position, player.position);
+    float distance = Vector2.Distance(transform.position, player.position);
 
-        if (distance <= detectRange)
+    if (distance <= detectRange)
+    {
+        if (distance > attackRange)
         {
-            if (distance > attackRange)
+            if (!isAttacking) // Hanya bergerak jika tidak sedang menyerang
             {
                 MoveToPlayer();
-            }
-            else
-            {
-                AttackPlayer();
             }
         }
         else
         {
+            if (!isAttacking) // Mulai menyerang jika tidak sedang menyerang
+            {
+                StartCoroutine(AttackPlayer());
+            }
+        }
+    }
+    else
+    {
+        if (!isAttacking) // Hanya set animasi idle jika tidak sedang menyerang
+        {
+            rb.velocity = Vector2.zero; // Hentikan pergerakan musuh
             animator.SetBool("run", false);
             animator.SetBool("attack", false);
         }
-
-        if (maxHealth <= 0)
-        {
-            Debug.Log("Enemy mati");
-            Destroy(gameObject);
-            PlayerStats.instance.AddExp(50);
-        }
     }
 
+    if (maxHealth <= 0)
+    {
+        Debug.Log("Enemy mati");
+        Destroy(gameObject);
+        PlayerStats.instance.AddExp(50);
+    }
+}
     void MoveToPlayer()
     {
+        if (isAttacking) return; // Jangan bergerak jika sedang menyerang
+
         animator.SetBool("run", true);
         animator.SetBool("attack", false);
 
@@ -71,24 +95,26 @@ public class EnemyMushAI : MonoBehaviour
             spriteRenderer.flipX = true; // menghadap kanan
         }
 
-        rb.MovePosition(rb.position + direction * moveSpeed * Time.deltaTime);
+        // Gunakan velocity untuk pergerakan
+        rb.velocity = direction * moveSpeed;
     }
 
-    void AttackPlayer()
+    IEnumerator AttackPlayer()
     {
-        if (Time.time - lastAttackTime > attackCooldown)
+        isAttacking = true; // Set flag menyerang
+        rb.velocity = Vector2.zero; // Hentikan pergerakan musuh
+        animator.SetBool("attack", true);
+        animator.SetBool("run", false);
+
+        yield return new WaitForSeconds(attackCooldown); // Tunggu cooldown serangan
+
+        if (PlayerStats.instance != null)
         {
-            animator.SetBool("attack", true);
-            animator.SetBool("run", false);
-            lastAttackTime = Time.time;
-
-            if (PlayerStats.instance != null)
-            {
-                PlayerStats.instance.TakeDamage(damage);
-            }
-
-            Debug.Log("Enemy menyerang!");
+            PlayerStats.instance.TakeDamage(damage);
         }
+
+        Debug.Log("Enemy menyerang!");
+        isAttacking = false; // Reset flag menyerang
     }
 
     void OnDrawGizmosSelected()
@@ -100,11 +126,10 @@ public class EnemyMushAI : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 
-
-        public void TakeDamage(int damage)
-        {
-            maxHealth -= damage;
-            maxHealth = Mathf.Clamp(maxHealth, 0, maxHealth);
-            Debug.Log("Enemy menerima damage: " + damage + ", sisa health: " + maxHealth);
-        }
+    public void TakeDamage(int damage)
+    {
+        maxHealth -= damage;
+        maxHealth = Mathf.Clamp(maxHealth, 0, maxHealth);
+        Debug.Log("Enemy menerima damage: " + damage + ", sisa health: " + maxHealth);
+    }
 }

@@ -1,0 +1,67 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BarrierBlocker : MonoBehaviour
+{
+    public string tagMushroom; // Tag yang akan diblokir
+    public float pushBackForce = 10f; // Gaya mundur saat menyentuh barrier
+    public BoxCollider2D barrierCollider; // Collider untuk barrier
+
+    private List<EnemyMushAI> enemiesInBarrier = new List<EnemyMushAI>(); // Daftar musuh di dalam barrier
+
+    private void Start()
+    {
+        if (barrierCollider == null)
+        {
+            barrierCollider = GetComponent<BoxCollider2D>();
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag(tagMushroom))
+        {
+            Rigidbody2D rb = other.GetComponent<Rigidbody2D>();
+            EnemyMushAI enemyAI = other.GetComponent<EnemyMushAI>();
+
+            if (enemyAI != null)
+            {
+                if (!enemiesInBarrier.Contains(enemyAI))
+                {
+                    enemiesInBarrier.Add(enemyAI); // Tambahkan musuh ke daftar
+                }
+
+                enemyAI.isBlocked = true; // Set flag untuk menghentikan pergerakan musuh
+            }
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.CompareTag(tagMushroom))
+        {
+            EnemyMushAI enemyAI = other.GetComponent<EnemyMushAI>();
+
+            if (enemyAI != null)
+            {
+                enemyAI.isBlocked = false; // Reset flag saat musuh keluar dari barrier
+                enemiesInBarrier.Remove(enemyAI); // Hapus musuh dari daftar
+            }
+        }
+    }
+
+    public void DisableBarrier()
+    {
+        // Reset semua musuh di dalam barrier
+        foreach (EnemyMushAI enemy in enemiesInBarrier)
+        {
+            if (enemy != null)
+            {
+                enemy.isBlocked = false; // Reset flag
+            }
+        }
+
+        enemiesInBarrier.Clear(); // Kosongkan daftar musuh
+        barrierCollider.enabled = false; // Nonaktifkan collider
+    }
+}
