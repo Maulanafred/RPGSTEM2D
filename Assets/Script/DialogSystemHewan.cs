@@ -142,6 +142,7 @@ public class DialogSystemHewan : MonoBehaviour
 
     void ShowQuestion()
     {
+        AudioManager.Instance.PlaySFX("Soal", 2); // Mainkan efek suara klik
         questionPanel.SetActive(true);
         resultText.text = "";
 
@@ -158,6 +159,7 @@ public class DialogSystemHewan : MonoBehaviour
     {
         if (selectedIndex == correctAnswerIndex)
         {
+            AudioManager.Instance.PlaySFX("Soal", 0); // Mainkan efek suara klik
             resultText.color = Color.green;
             resultText.text =  jawabanbenar; // Tampilkan jawaban benar
 
@@ -170,6 +172,7 @@ public class DialogSystemHewan : MonoBehaviour
         }
         else
         {
+            AudioManager.Instance.PlaySFX("Soal", 1); // Mainkan efek suara klik
             resultText.color = Color.red;
             resultText.text = "❌ Jawaban Salah: Coba lagi ya!";
             return;

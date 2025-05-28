@@ -128,6 +128,7 @@ public class DialogSystemNPCAwal : MonoBehaviour
             uiManagementGame.UpdateMisiUtama(1); // Update misi utama
 
             animator.SetTrigger("Panduan"); // Panggil trigger animasi "panduan"
+            AudioManager.Instance.PlaySFX("UI",3);
 
             AudioManager.Instance.PlaySFX("UI", 0); // Mainkan efek suara klik
         }

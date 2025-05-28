@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class EnemySlimeAI : MonoBehaviour
 {
+    public GameObject deadSFXPrefab; // Prefab untuk efek suara saat musuh mati
     public static EnemySlimeAI instance;
     [Header("Enemy Slime AI Settings")]
     public float moveSpeed = 2f;
@@ -15,6 +16,10 @@ public class EnemySlimeAI : MonoBehaviour
     private Transform player;
     private float lastAttackTime;
     private Rigidbody2D rb;
+
+    public int exp;
+
+    public bool isBlocked = false; // Flag untuk menghentikan pergerakan sementara
 
     void Start()
     {
@@ -30,6 +35,12 @@ public class EnemySlimeAI : MonoBehaviour
     void Update()
     {
         if (player == null) return;
+
+        if (isBlocked) // Jika musuh sedang diblokir, hentikan pergerakan
+        {
+            rb.velocity = Vector2.zero; // Hentikan pergeraka
+            return;
+        }
 
         float distance = Vector2.Distance(transform.position, player.position);
 
@@ -47,9 +58,13 @@ public class EnemySlimeAI : MonoBehaviour
 
         if (maxHealth <= 0)
         {
+            GameObject deadSFX = Instantiate(deadSFXPrefab, transform.position, Quaternion.identity);
+
+   
+            Destroy(deadSFX, 4f); // Hancurkan efek suara setelah 2 detik
             Debug.Log("Enemy mati");
             Destroy(gameObject); // Hancurkan enemy jika health habis
-            PlayerStats.instance.AddExp(50); // Tambah EXP ke player
+            PlayerStats.instance.AddExp(exp); // Tambah EXP ke player
         }
     }
 

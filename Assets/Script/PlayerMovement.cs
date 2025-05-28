@@ -24,10 +24,16 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isAttacking = false;
 
+     public string[] attackableEnemyTags = {"Slime", "Mushroom"}; // Contoh daftar tag musuh
+      public float attackSearchRange = 10f;
+
     // Header sounds
     [Header("Sounds")]
     public GameObject fireballSoundSFX;
     public GameObject charAttackSoundSFX;
+
+    
+
 
 
 
@@ -100,28 +106,55 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-public void PlayerAttack()
+public void PlayerAttack() // Tidak perlu parameter tag lagi di sini
 {
-    if (!isAttacking)
+    if (isAttacking) // Jika sedang menyerang, jangan lakukan apa-apa
     {
-        Transform nearestEnemy = FindNearestEnemy(10f); // Cari musuh dalam jarak 5 unit
-        if (nearestEnemy != null)
-        {
-            Vector2 directionToEnemy = (nearestEnemy.position - transform.position).normalized;
+        return;
+    }
 
-            // Atur animasi menghadap ke arah musuh
-            float angle = Mathf.Atan2(directionToEnemy.y, directionToEnemy.x) * Mathf.Rad2Deg;
-            string trigger = GetTriggerFromAngle(angle);
-            ResetAllTriggers();
-            animator.SetTrigger(trigger);
-            currentTrigger = trigger;
+    Transform overallNearestEnemy = null;
+    float shortestDistanceFound = attackSearchRange + 1f; // Inisialisasi dengan jarak lebih jauh dari jangkauan
 
-            StartCoroutine(Attack(directionToEnemy)); // Serang ke arah musuh
-        }
-        else
+    // Iterasi melalui setiap tag yang bisa diserang
+    foreach (string enemyTag in attackableEnemyTags)
+    {
+        Transform nearestInThisTag = FindNearestEnemyByTag(enemyTag, attackSearchRange);
+
+        if (nearestInThisTag != null)
         {
-            Debug.Log("Tidak ada musuh dalam jarak serangan.");
+            float distanceToThisEnemy = Vector2.Distance(transform.position, nearestInThisTag.position);
+
+            // Jika musuh dari tag ini lebih dekat dari yang sudah ditemukan sebelumnya (dari tag lain)
+            // dan masih dalam jangkauan serangan utama (meskipun FindNearestEnemyByTag juga sudah mengecek range)
+            if (distanceToThisEnemy < shortestDistanceFound && distanceToThisEnemy <= attackSearchRange)
+            {
+                shortestDistanceFound = distanceToThisEnemy;
+                overallNearestEnemy = nearestInThisTag;
+            }
         }
+    }
+
+    // Setelah memeriksa semua tag, jika ada musuh terdekat yang ditemukan
+    if (overallNearestEnemy != null)
+    {
+        Vector2 directionToEnemy = (overallNearestEnemy.position - transform.position).normalized;
+
+        // Atur animasi menghadap ke arah musuh
+        float angle = Mathf.Atan2(directionToEnemy.y, directionToEnemy.x) * Mathf.Rad2Deg;
+        string trigger = GetTriggerFromAngle(angle);
+        ResetAllTriggers();
+        animator.SetTrigger(trigger);
+        currentTrigger = trigger;
+
+        StartCoroutine(Attack(directionToEnemy)); // Serang ke arah musuh terdekat
+    }
+    else
+    {
+        Debug.Log("Tidak ada musuh (dari tag yang ditentukan) dalam jarak serangan.");
+        // Opsional: Anda bisa membuat player menyerang ke arah depan jika tidak ada target
+        // Vector2 facingDirection = GetFacingDirectionFromCurrentTrigger(); // Anda perlu buat fungsi ini
+        // StartCoroutine(Attack(facingDirection));
     }
 }
 
@@ -207,24 +240,33 @@ IEnumerator Attack(Vector2 attackDir)
     isAttacking = false;
 }
     
-    private Transform FindNearestEnemy(float range)
-    {
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Mushroom");
-        Transform nearestEnemy = null;
-        float shortestDistance = range;
-
-        foreach (GameObject enemy in enemies)
+    private Transform FindNearestEnemyByTag(string enemyTag, float range)
         {
-            float distance = Vector2.Distance(transform.position, enemy.transform.position);
-            if (distance < shortestDistance)
+            // Validasi input tag (opsional tapi baik)
+            if (string.IsNullOrEmpty(enemyTag))
             {
-                shortestDistance = distance;
-                nearestEnemy = enemy.transform;
+                Debug.LogWarning("Tag musuh tidak boleh kosong atau null.");
+                return null;
             }
-        }
 
-        return nearestEnemy;
-    }
+            GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag); // Menggunakan parameter enemyTag
+            Transform nearestEnemy = null;
+            float shortestDistance = range; // Hanya akan mencari musuh yang lebih dekat dari 'range' awal
+
+            foreach (GameObject enemy in enemies)
+            {
+                float distance = Vector2.Distance(transform.position, enemy.transform.position);
+                
+                // Hanya pertimbangkan musuh jika jaraknya kurang dari shortestDistance saat ini
+                // (yang awalnya adalah 'range')
+                if (distance < shortestDistance)
+                {
+                    shortestDistance = distance;
+                    nearestEnemy = enemy.transform;
+                }
+            }
+            return nearestEnemy;
+        }
 
 
 

@@ -9,7 +9,10 @@ public class ModulHewan
     [TextArea] public string deskripsi;
     public Sprite siluetHewan; // Gambar asli
     public Sprite siluetHewanSebelumDitemukan; // Siluet sebelum ditemukan
+    public int soundEffectIndex = 0; // Index suara hewan di AudioManager, -1 jika tidak ada suara
 }
+
+// Definisi class ModulHewan ada di sini atau di file terpisah (seperti di atas)
 
 public class BukuModul : MonoBehaviour
 {
@@ -19,89 +22,113 @@ public class BukuModul : MonoBehaviour
     public Image gambarSiluet;
 
     public ModulHewan[] modulHewan;
-    public RawImage[] modulIndicators; // Array untuk menyimpan raw image indikator modul
-    public Color selectedColor = Color.green; // Warna untuk modul yang dipilih
-    public Color defaultColor = Color.white; // Warna default untuk modul yang tidak dipilih
+    public RawImage[] modulIndicators;
+    public Color selectedColor = Color.green;
+    public Color defaultColor = Color.white;
 
-    public TextMeshProUGUI statusText; // TMP untuk status "ditemukan" atau "belum ditemukan"
+    public TextMeshProUGUI statusText;
 
     private int index = 0;
-    private bool[] modulUnlocked; // Array untuk melacak status unlock modul
+    private bool[] modulUnlocked;
+
+    // --- Tambahan untuk suara hewan dari tombol ---
+    public string animalSoundCategory = "Hewan"; // Kategori suara hewan di AudioManager Anda
+    private int activeAnimalSoundByButtonIndex = 0; // Index suara hewan yang aktif dimainkan oleh tombol
+    // ---------------------------------------------
 
     void Start()
     {
         if (instance == null)
         {
-            instance = this; // Set instance jika belum ada
+            instance = this;
         }
 
-        modulUnlocked = new bool[modulHewan.Length]; // Inisialisasi array unlock
+        modulUnlocked = new bool[modulHewan.Length];
+        // Saat mulai, panggil TampilkanModul. Ini juga akan memastikan tidak ada sisa suara aktif.
         TampilkanModul(index);
-        UpdateIndicators(); // Perbarui indikator saat modul pertama kali ditampilkan
+        UpdateIndicators();
     }
 
     public void TampilkanModul(int i)
     {
         if (i < 0 || i >= modulHewan.Length) return;
 
+        AudioManager.Instance.StopSFXGroup("Hewan"); // Hentikan suara hewan sebelumnya
+
+        // --- Hentikan suara hewan yang dimainkan oleh tombol JIKA modul berganti ---
+        // Ini penting agar suara dari modul sebelumnya berhenti saat kita navigasi.
+        // Asumsi: AudioManager Anda memiliki metode StopSFX(string category, int soundIndex)
+        // -------------------------------------------------------------------------
+
+        // Logika untuk menampilkan informasi modul (judul, deskripsi, gambar, status)
+        // TIDAK ADA pemutaran suara otomatis di sini. Suara hanya dari tombol.
         if (modulUnlocked[i])
         {
-            // Jika modul sudah ditemukan, tampilkan nama dan gambar asli
             judulText.text = modulHewan[i].judul;
             deskripsiText.text = modulHewan[i].deskripsi;
             gambarSiluet.sprite = modulHewan[i].siluetHewan;
-
-            // Perbarui status TMP
+            activeAnimalSoundByButtonIndex = modulHewan[i].soundEffectIndex;
             statusText.text = "Sudah Ditemukan";
-            statusText.color = Color.green; // Warna hijau untuk status ditemukan
+            statusText.color = Color.green;
         }
         else
         {
-            // Jika modul belum ditemukan, tampilkan "????" dan siluet sebelum ditemukan
             judulText.text = "????";
-            deskripsiText.text = modulHewan[i].deskripsi;
+            deskripsiText.text = modulHewan[i].deskripsi; // Atau sesuaikan deskripsi untuk modul terkunci
             gambarSiluet.sprite = modulHewan[i].siluetHewanSebelumDitemukan;
+            activeAnimalSoundByButtonIndex = modulHewan[i].soundEffectIndex; // Set index suara hewan
 
-            // Perbarui status TMP
             statusText.text = "Belum Ditemukan";
-            statusText.color = Color.red; // Warna merah untuk status belum ditemukan
+            statusText.color = Color.red;
         }
 
-        UpdateIndicators(); // Perbarui indikator setiap kali modul ditampilkan
+        UpdateIndicators();
     }
 
     public void NextModul()
     {
+        AudioManager.Instance.PlaySFX("UI", 1); // Suara klik UI (tetap ada)
         index = (index + 1) % modulHewan.Length;
-        TampilkanModul(index);
+        TampilkanModul(index); // TampilkanModul akan mengurus penghentian suara hewan dari tombol
     }
 
     public void PrevModul()
     {
+        AudioManager.Instance.PlaySFX("UI", 1); // Suara klik UI (tetap ada)
         index = (index - 1 + modulHewan.Length) % modulHewan.Length;
-        TampilkanModul(index);
+        TampilkanModul(index); // TampilkanModul akan mengurus penghentian suara hewan dari tombol
     }
+
+    // --- FUNGSI BARU UNTUK TOMBOL PEMUTAR SUARA HEWAN ---// Dalam BukuModul.cs
+    public void PlayCurrentAnimalSound()
+    {
+ 
+        AudioManager.Instance.PlaySFX("Hewan", index);
+    
+
+
+    }
+    // ----------------------------------------------------
 
     public void UnlockModul(int i)
     {
         if (i < 0 || i >= modulHewan.Length) return;
 
-        modulUnlocked[i] = true; // Tandai modul sebagai ditemukan
-        TampilkanModul(index); // Perbarui tampilan jika modul yang di-unlock adalah modul yang sedang ditampilkan
+        modulUnlocked[i] = true;
+        if (i == index)
+        {
+            // Jika modul yang di-unlock adalah yang sedang tampil, refresh tampilannya.
+            // TampilkanModul akan dipanggil, yang juga akan menghentikan suara
+            // dari tombol yang mungkin aktif dari state sebelumnya.
+            TampilkanModul(index);
+        }
     }
 
     private void UpdateIndicators()
     {
-        for (int i = 0; i < modulIndicators.Length; i++)
+        for (int j = 0; j < modulIndicators.Length; j++)
         {
-            if (i == index)
-            {
-                modulIndicators[i].color = selectedColor; // Ubah warna menjadi "selected"
-            }
-            else
-            {
-                modulIndicators[i].color = defaultColor; // Kembalikan ke warna default
-            }
+            modulIndicators[j].color = (j == index) ? selectedColor : defaultColor;
         }
     }
 }

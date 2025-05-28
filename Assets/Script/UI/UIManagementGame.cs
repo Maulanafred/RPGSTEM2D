@@ -13,7 +13,13 @@ public class UIManagementGame : MonoBehaviour
 
     [Header("UI GAMEOVER")]
 
-    public Transform[] playerTransform;
+    public Transform awalSpawn;
+
+    public Transform checkPoint1;
+    public Transform checkPoint2;
+
+
+    private Transform currentCheckpoint; // Checkpoint terakhir yang tersimpan
 
 
     public Animator transisiGameOver; // Referensi ke Animator untuk transisi Game Over
@@ -54,7 +60,7 @@ public class UIManagementGame : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
+        AudioManager.Instance.PlayBackgroundMusicWithTransition2("Gameplay1", 0, 1f, 0.6f); // Mainkan musik latar belakang dengan transisi
 
     }
 
@@ -100,7 +106,7 @@ public class UIManagementGame : MonoBehaviour
 
     public void ShowObjective()
     {
-        AudioManager.Instance.PlaySFX("UI", 2); // Mainkan efek suara klik
+        AudioManager.Instance.PlaySFX("Buku", 0); // Mainkan efek suara klik
         UiObjective.SetActive(true);
     }
 
@@ -210,6 +216,14 @@ public class UIManagementGame : MonoBehaviour
     }
 
 
+
+    public void SetCheckpoint(Transform checkpoint)
+    {
+        currentCheckpoint = checkpoint;
+        Debug.Log("Checkpoint disimpan: " + checkpoint.name);
+    }
+
+
     public void ShowGameOverPanel()
     {
         isGameOver = true; // Tandai bahwa game sudah berakhir
@@ -223,16 +237,16 @@ public class UIManagementGame : MonoBehaviour
     public void RestartGame()
     {
         if (isGameOver == false) return; // Cegah pemanggilan ulang jika game sudah berakhir
-        
-        Time.timeScale = 1f;
+
+
         transisiGameOver.SetTrigger("hitam"); // Panggil trigger animasi Game Over
         AudioManager.Instance.PlaySFX("UI", 1); // Mainkan efek suara klik
         playerMovement.animator.SetTrigger("idle");
 
         gameOverPanel.SetActive(false); // Sembunyikan panel Game Over
 
-        
-        
+
+
         StartCoroutine(DelayedRestart()); // Mulai coroutine untuk menunggu sebelum restart
 
     }
@@ -242,19 +256,27 @@ public class UIManagementGame : MonoBehaviour
         // mengambil posisi player dengan tag Player
 
         GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSecondsRealtime(2f); // Tunggu 0.5 detik sebelum mengubah posisi player
 
-        playerObject.transform.position = playerTransform[0].position; // mengatur posisi player ke posisi awal
+        playerObject.transform.position = currentCheckpoint != null ? currentCheckpoint.position : awalSpawn.position;
 
-        yield return new WaitForSeconds(1f); // Tunggu 1 detik sebelum restart
-        PlayerStats.instance.currentHealth = PlayerStats.instance.maxHealth; // Reset kesehatan player
+        PlayerStats.instance.currentHealth = PlayerStats.instance.maxHealth; // Reset statistik player
+        yield return new WaitForSecondsRealtime(1f); // Tunggu 1 detik sebelum restart
 
+
+
+        PlayerStats.instance.UpdateUI(); // Perbarui UI kesehatan player
         transisiGameOver.SetTrigger("putih");
         playerMovement.enabled = true;
         isGameOver = false; // Tandai bahwa game sudah berakhir
-        
 
-        
+        Time.timeScale = 1f;
+
+    }
+
+    public void MulaiUlang()
+    {
+        SceneController.instance.LoadScene("Gameplay"); // Muat ulang scene saat ini
     }
     
 

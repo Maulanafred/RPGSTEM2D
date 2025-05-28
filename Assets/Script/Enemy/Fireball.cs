@@ -14,6 +14,8 @@ public class Fireball : MonoBehaviour
             EnemySlimeAI enemy = collision.GetComponent<EnemySlimeAI>();
             if (enemy != null)
             {
+                GameObject soundEffect = Instantiate(enemyHitSoundEffect, transform.position, Quaternion.identity);
+                Destroy(soundEffect, 2f); // Hancurkan sound effect setelah 2 detik
                 enemy.TakeDamage(damage);
             }
 

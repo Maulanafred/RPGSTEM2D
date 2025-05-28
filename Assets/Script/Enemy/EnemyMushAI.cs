@@ -3,6 +3,7 @@ using System.Collections;
 
 public class EnemyMushAI : MonoBehaviour
 {
+    public GameObject deadSFXPrefab; // Prefab efek suara saat musuh mati
     public float moveSpeed = 2f;
     public float detectRange = 5f;
     public float attackRange = 1.5f;
@@ -20,6 +21,8 @@ public class EnemyMushAI : MonoBehaviour
     private bool isAttacking = false; // Flag untuk memastikan musuh tidak terus berganti animasi
 
     public bool isBlocked = false; // Flag untuk menghentikan pergerakan sementara
+
+    public int exp ; // Jumlah exp yang diberikan saat mati
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
@@ -71,9 +74,13 @@ void Update()
 
     if (maxHealth <= 0)
     {
+        GameObject deadSFX = Instantiate(deadSFXPrefab, transform.position, Quaternion.identity);
+
+   
+        Destroy(deadSFX, 4f); // Hancurkan efek suara setelah 2 detik
         Debug.Log("Enemy mati");
         Destroy(gameObject);
-        PlayerStats.instance.AddExp(50);
+        PlayerStats.instance.AddExp(exp);
     }
 }
     void MoveToPlayer()

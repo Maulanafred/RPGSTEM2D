@@ -292,6 +292,23 @@ public class AudioManager : MonoBehaviour
             group.soundEffects[index].Stop();
         }
     }
+
+    // STOP SFX GROUP
+    public void StopSFXGroup(string groupName)
+    {
+        SoundEffectGroup group = System.Array.Find(audioSFXGroups, g => g.groupName == groupName);
+        if (group != null)
+        {
+            foreach (AudioSource sfx in group.soundEffects)
+            {
+                sfx.Stop();
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"Sound effect group '{groupName}' not found.");
+        }
+    }
     
     public bool IsSFXPlaying(string groupName, int index)
     {

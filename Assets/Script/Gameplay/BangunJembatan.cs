@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro; // Pastikan Anda memiliki referensi ke TextMeshPro untuk menggunakan TextMeshProUGUI
 
 public class BangunJembatan : MonoBehaviour
 {
@@ -18,6 +19,8 @@ public class BangunJembatan : MonoBehaviour
     public BoxCollider2D jembatancollider;
 
     public GameObject jembatandibangun; // Referensi ke objek jembatan yang sudah dibangun
+
+    public TextMeshProUGUI jembatanText; // Referensi ke TextMeshPro untuk menampilkan teks jembatan
 
     public bool sudahDibangun = false; // Status apakah jembatan sudah dibangun
 
