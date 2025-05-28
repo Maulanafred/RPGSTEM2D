@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class TriggerGame2 : MonoBehaviour
 {
+
+    public GameObject resultPanel; // Referensi ke panel hasil akhir
     // Start is called before the first frame update
     void Start()
     {
@@ -17,15 +19,18 @@ public class TriggerGame2 : MonoBehaviour
     }
 
 
-    
+
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
         {
-            SceneController.instance.LoadScene("Gameplay2");
+            resultPanel.SetActive(true); // Aktifkan panel hasil akhir saat pemain masuk ke trigger
+            ScoreManager.Instance.TampilkanHasilAkhir(); // Panggil method untuk menampilkan hasil akhir
+
         }
     }
-
-
 }
+
+
+

@@ -13,6 +13,8 @@ public class UIManagementGame : MonoBehaviour
 
     [Header("UI GAMEOVER")]
 
+    public Button[] button;
+
     public Transform awalSpawn;
 
     public Transform checkPoint1;
@@ -194,6 +196,10 @@ public class UIManagementGame : MonoBehaviour
 
     public void MainMenu()
     {
+        for (int i = 0; i < button.Length; i++)
+        {
+            button[i].interactable = false; // Aktifkan kembali semua tombol
+        }
         AudioManager.Instance.StopBackgroundMusicWithTransition("Gameplay1", 0, 1f); // Hentikan musik latar belakang dengan transisi
         AudioManager.Instance.PlaySFX("UI", 1); // Mainkan efek suara klik
         Time.timeScale = 1f; // Lanjutkan waktu di game
@@ -276,7 +282,14 @@ public class UIManagementGame : MonoBehaviour
 
     public void MulaiUlang()
     {
+        AudioManager.Instance.StopBackgroundMusicWithTransition("Gameplay1", 0, 1f); // Hentikan musik latar belakang dengan transisi
+        for (int i = 0; i < button.Length; i++)
+        {
+            button[i].interactable = false; // Aktifkan kembali semua tombol
+        }
+        Time.timeScale = 1f; // Pastikan waktu di game berjalan normal
         SceneController.instance.LoadScene("Gameplay"); // Muat ulang scene saat ini
+        
     }
     
 

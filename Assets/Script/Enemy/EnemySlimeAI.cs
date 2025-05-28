@@ -60,7 +60,7 @@ public class EnemySlimeAI : MonoBehaviour
         {
             GameObject deadSFX = Instantiate(deadSFXPrefab, transform.position, Quaternion.identity);
 
-   
+            ScoreManager.Instance.TambahMusuhDikalahkan(); // Tambah jumlah musuh yang dikalahkan
             Destroy(deadSFX, 4f); // Hancurkan efek suara setelah 2 detik
             Debug.Log("Enemy mati");
             Destroy(gameObject); // Hancurkan enemy jika health habis

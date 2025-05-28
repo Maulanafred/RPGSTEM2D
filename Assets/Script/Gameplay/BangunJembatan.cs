@@ -55,6 +55,7 @@ public class BangunJembatan : MonoBehaviour
 
     public void GastartBangunJembatan()
     {
+        ScoreManager.Instance.TambahPuzzleDiperbaiki(); // Tambah jumlah musuh yang dikalahkan
         uiTransisi.SetActive(true); // Tampilkan UI transisi
         sudahDibangun = true; // Tandai jembatan sudah dibangun
         uiGame.SetActive(false); // Sembunyikan UI jembatan

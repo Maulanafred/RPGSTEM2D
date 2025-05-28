@@ -1,37 +1,193 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro; // Jangan lupa tambahkan ini jika belum ada
 
 public class ScoreManager : MonoBehaviour
 {
+    public UIManagementGame uiManagementGame; // Referensi ke UIManagementGame
     public static ScoreManager Instance; // Singleton instance
 
-    public int score ; // Skor awal
-
-    public int level ; // Level awal
-
-    public int salahmenjawab ; // Jumlah jawaban salah
-
+    [Header("Data Skor & Progres")]
+    public int score; // Skor akan dihitung berdasarkan aksi
+    public int level = 1; // Level awal
+    public int soalDiselesaikan; // Jumlah soal yang diselesaikan
+    public int salahmenjawab; // Jumlah jawaban salah
     public int jumlahpuzzlediperbaiki; // Jumlah puzzle yang diperbaiki
-    public int jumlahmusuhdikalahkan ; // Jumlah musuh yang dikalahkan
+    public int jumlahmusuhdikalahkan; // Jumlah musuh yang dikalahkan
 
-    [Header("UI Komponen")]
-    public TMPro.TMP_Text scoreText; // Referensi ke teks skor di UI
-    public TMPro.TMP_Text levelText; // Referensi ke teks level di UI
-    public TMPro.TMP_Text salahmenjawabText; // Referensi ke teks jumlah jawaban salah di UI
-    public TMPro.TMP_Text jumlahpuzzlediperbaikiText; // Referensi ke teks jumlah puzzle yang diperbaiki di UI
-    public TMPro.TMP_Text jumlahmusuhdikalahkanText; // Referensi ke teks jumlah musuh yang dikalahkan di UI
+    [Header("UI Komponen Hasil")]
+    public TMP_Text scoreText;
+    public TMP_Text levelText;
+    public TMP_Text soalDiselesaikanText;
+    public TMP_Text salahmenjawabText;
+    public TMP_Text jumlahpuzzlediperbaikiText;
+    public TMP_Text jumlahmusuhdikalahkanText;
+    public TMP_Text rankText; // << TEXT BARU untuk Peringkat/Rank
+    public TMP_Text kataKataMotivasiText; // << TEXT BARU untuk Kata-Kata Motivasi
 
-    // Start is called before the first frame update
-    void Start()
+    // private bool hasilSudahDitampilkan = false; // Anda menghapus ini, pastikan TampilkanHasilAkhir dipanggil dengan benar dari skrip lain
+
+    void Awake() // Menggunakan Awake untuk inisialisasi Singleton
     {
-        Instance = this; // Inisialisasi singleton instance
-        
+        if (Instance == null)
+        {
+            Instance = this;
+            // DontDestroyOnLoad(gameObject); // Opsional
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
-    // Update is called once per frame
+    void Start()
+    {
+        // Inisialisasi awal jika perlu
+    }
+
     void Update()
     {
-        
+        // Kalkulasi skor sekarang dilakukan di Update setiap frame
+        if (uiManagementGame != null)
+        {
+            soalDiselesaikan = uiManagementGame.misiYangSudahDiselesaikan;
+        }
+        else
+        {
+            // Jika uiManagementGame null, soalDiselesaikan tidak akan terupdate.
+            // Sebaiknya ini di-handle atau dipastikan ter-assign.
+            // Untuk sekarang, saya biarkan agar tidak error jika belum di-assign saat testing.
+            // Debug.LogWarning("Referensi uiManagementGame di ScoreManager belum di-assign!");
+        }
+
+        // Kalkulasi skor dipindahkan ke Update sesuai kode Anda:
+        float skorKalkulasi = 0f;
+        skorKalkulasi += soalDiselesaikan * 25f;
+        skorKalkulasi += jumlahmusuhdikalahkan * 0.5f;
+        skorKalkulasi -= salahmenjawab * 2f;
+        skorKalkulasi += jumlahpuzzlediperbaiki * 10f;
+        score = Mathf.RoundToInt(skorKalkulasi);
+
+        // PENTING: Logika untuk memanggil TampilkanHasilAkhir()
+        // (if (uiManagementGame.isGameOver && !hasilSudahDitampilkan))
+        // telah Anda hapus dari Update. Pastikan Anda memanggil
+        // ScoreManager.Instance.TampilkanHasilAkhir() dari skrip lain
+        // (misalnya UIManagementGame) ketika game benar-benar berakhir.
+    }
+
+    // Fungsi HitungSkorAkhir() sekarang kosong di kode Anda,
+    // karena kalkulasi sudah di Update(). Saya biarkan kosong.
+    public void HitungSkorAkhir()
+    {
+        // Kalkulasi skor sekarang ada di Update().
+        // Fungsi ini bisa Anda gunakan jika ingin memicu kalkulasi ulang secara manual
+        // di luar Update(), atau bisa juga dihapus jika tidak perlu.
+        // Jika ingin digunakan, pindahkan kembali logika kalkulasi skor ke sini dari Update().
+    }
+
+    // Fungsi untuk menampilkan semua hasil ke UI
+    public void TampilkanHasilAkhir()
+    {
+        // 'score' sudah terupdate dari Update()
+        // Jika Anda ingin memastikan skor paling baru dihitung tepat sebelum tampil,
+        // Anda bisa memindahkan logika kalkulasi dari Update() ke sini atau ke HitungSkorAkhir()
+        // dan memanggil HitungSkorAkhir() di sini.
+        // Untuk saat ini, saya asumsikan 'score' dari Update() sudah cukup.
+
+        Debug.Log($"Menampilkan Hasil Akhir: Skor = {score}, Level = {level}, Misi Selesai = {soalDiselesaikan}, Salah = {salahmenjawab}, Puzzle = {jumlahpuzzlediperbaiki}, Musuh = {jumlahmusuhdikalahkan}");
+
+        if (scoreText != null)
+        {
+            scoreText.text = $"SKOR AKHIR: {score}";
+        }
+        if (levelText != null) // Menambahkan kembali update levelText
+        {
+            levelText.text = $"Level: {level}";
+        }
+        if (soalDiselesaikanText != null)
+        {
+            soalDiselesaikanText.text = $"Misi Diselesaikan: {soalDiselesaikan} (+{soalDiselesaikan * 25} poin)";
+        }
+        if (salahmenjawabText != null)
+        {
+            salahmenjawabText.text = $"Salah Menjawab: {salahmenjawab} (-{salahmenjawab * 2} poin)";
+        }
+        if (jumlahpuzzlediperbaikiText != null)
+        {
+            // Menambahkan tanda '+' untuk konsistensi poin positif
+            jumlahpuzzlediperbaikiText.text = $"Puzzle Diperbaiki: {jumlahpuzzlediperbaiki} (+{jumlahpuzzlediperbaiki * 10} poin)";
+        }
+        if (jumlahmusuhdikalahkanText != null)
+        {
+            // Menambahkan tanda '+' untuk konsistensi poin positif
+            jumlahmusuhdikalahkanText.text = $"Musuh Dikalahkan: {jumlahmusuhdikalahkan} (+{(jumlahmusuhdikalahkan * 0.5f).ToString("F1")} poin)";
+        }
+
+        // --- Logika untuk Peringkat dan Kata-Kata Motivasi ---
+        string peringkatDiterima = "D"; // Peringkat default
+        string kataMotivasi = "Terus semangat belajar ya! Setiap usaha pasti ada hasilnya!"; // Kata-kata default
+
+        if (score >= 100)
+        {
+            peringkatDiterima = "S+";
+            kataMotivasi = "LUAR BIASA! Kamu adalah seorang jenius! Teruslah menginspirasi!";
+        }
+        else if (score >= 90)
+        {
+            peringkatDiterima = "S ";
+            kataMotivasi = "WOW! Kehebatanmu sungguh mengagumkan! Kamu calon bintang masa depan!";
+        }
+        else if (score >= 80)
+        {
+            peringkatDiterima = "A";
+            kataMotivasi = "Hebat! Prestasimu sangat membanggakan! Terus asah kemampuanmu!";
+        }
+        else if (score >= 70)
+        {
+            peringkatDiterima = "B";
+            kataMotivasi = "Bagus sekali! Kamu sudah di jalur yang benar. Jangan berhenti belajar ya!";
+        }
+        else if (score >= 40)
+        {
+            peringkatDiterima = "C";
+            kataMotivasi = "Sudah cukup baik! Dengan sedikit usaha lagi, kamu pasti bisa lebih hebat!";
+        }
+        // Jika skor < 50, akan menggunakan peringkat D dan kata motivasi default.
+
+        if (rankText != null)
+        {
+            rankText.text = $"{peringkatDiterima}";
+        }
+        else
+        {
+            Debug.LogWarning("rankText belum di-assign di Inspector!");
+        }
+
+        if (kataKataMotivasiText != null)
+        {
+            kataKataMotivasiText.text = kataMotivasi;
+        }
+        else
+        {
+            Debug.LogWarning("kataKataMotivasiText belum di-assign di Inspector!");
+        }
+        // --- Selesai Logika Peringkat dan Kata-Kata ---
+    }
+
+    // Metode untuk menambah data (nama sudah konsisten)
+    public void SalahMenjawab()
+    {
+        salahmenjawab++;
+    }
+
+    public void TambahMusuhDikalahkan()
+    {
+        jumlahmusuhdikalahkan++;
+    }
+
+    public void TambahPuzzleDiperbaiki()
+    {
+        jumlahpuzzlediperbaiki++;
     }
 }

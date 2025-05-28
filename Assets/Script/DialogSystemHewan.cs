@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.UI;
 using System;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class DialogSystemHewan : MonoBehaviour
 {
@@ -172,6 +173,7 @@ public class DialogSystemHewan : MonoBehaviour
         }
         else
         {
+            ScoreManager.Instance.SalahMenjawab();
             AudioManager.Instance.PlaySFX("Soal", 1); // Mainkan efek suara klik
             resultText.color = Color.red;
             resultText.text = "❌ Jawaban Salah: Coba lagi ya!";
