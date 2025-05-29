@@ -48,22 +48,10 @@ public class ScoreManager : MonoBehaviour
 
     void Update()
     {
-        // Kalkulasi skor sekarang dilakukan di Update setiap frame
-        if (uiManagementGame != null)
-        {
-            soalDiselesaikan = uiManagementGame.misiYangSudahDiselesaikan;
-        }
-        else
-        {
-            // Jika uiManagementGame null, soalDiselesaikan tidak akan terupdate.
-            // Sebaiknya ini di-handle atau dipastikan ter-assign.
-            // Untuk sekarang, saya biarkan agar tidak error jika belum di-assign saat testing.
-            // Debug.LogWarning("Referensi uiManagementGame di ScoreManager belum di-assign!");
-        }
 
         // Kalkulasi skor dipindahkan ke Update sesuai kode Anda:
         float skorKalkulasi = 0f;
-        skorKalkulasi += soalDiselesaikan * 25f;
+        skorKalkulasi += soalDiselesaikan * 5f;
         skorKalkulasi += jumlahmusuhdikalahkan * 0.5f;
         skorKalkulasi -= salahmenjawab * 2f;
         skorKalkulasi += jumlahpuzzlediperbaiki * 10f;
@@ -107,7 +95,7 @@ public class ScoreManager : MonoBehaviour
         }
         if (soalDiselesaikanText != null)
         {
-            soalDiselesaikanText.text = $"Misi Diselesaikan: {soalDiselesaikan} (+{soalDiselesaikan * 25} poin)";
+            soalDiselesaikanText.text = $"Misi Diselesaikan: {soalDiselesaikan} (+{soalDiselesaikan * 5} poin)";
         }
         if (salahmenjawabText != null)
         {
@@ -189,5 +177,10 @@ public class ScoreManager : MonoBehaviour
     public void TambahPuzzleDiperbaiki()
     {
         jumlahpuzzlediperbaiki++;
+    }
+
+    public void TambahSoalDiselesaikan()
+    {
+        soalDiselesaikan++;
     }
 }

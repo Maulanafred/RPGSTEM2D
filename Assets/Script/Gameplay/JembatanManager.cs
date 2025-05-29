@@ -43,6 +43,7 @@ public class JembatanManager : MonoBehaviour
 
     public void UpdateWoodCount(int amount)
     {
+        AudioManager.Instance.PlaySFX("Event", 1); // Mainkan efek suara klik
         // Memperbarui jumlah kayu yang dimiliki pemain
         woodCount += amount;
         Destroy(kayuTerdekat); // Hancurkan kayu

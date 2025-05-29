@@ -7,6 +7,8 @@ public class EventSelesai : MonoBehaviour
 {
     public Transform player; // Referensi ke objek player
     public UIManagementGame uiManagementGame; // Referensi ke UIManagementGame
+
+    public PlayerStats playerStats; // Referensi ke PlayerStats, jika diperlukan
     public GameObject penghalang;
     public GameObject mainCamera;
     public GameObject eventCamera; // Referensi ke kamera event
@@ -36,7 +38,7 @@ public class EventSelesai : MonoBehaviour
     {
         if (uiManagementGame == null) return;
 
-        if (!aksiSudahDilakukan && uiManagementGame.misiYangSudahDiselesaikan >= uiManagementGame.totalMisi)
+        if (!aksiSudahDilakukan && uiManagementGame.misiYangSudahDiselesaikan >= uiManagementGame.totalMisi && playerStats.currentLevel >= 10)
         {
             aksiSudahDilakukan = true;
             uiManagementGame.isGameOver = true;
@@ -86,7 +88,7 @@ public class EventSelesai : MonoBehaviour
 
         while (elapsedTime < duration)
         {
-            elapsedTime += Time.deltaTime;
+            elapsedTime += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsedTime / duration);
             t = Mathf.SmoothStep(0f, 1f, t);
 

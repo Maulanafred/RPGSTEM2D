@@ -6,7 +6,13 @@ using TMPro; // Pastikan Anda memiliki referensi ke TextMeshPro untuk menggunaka
 public class BangunJembatan : MonoBehaviour
 {
 
+    public GameObject princess; // Referensi ke objek putri
+
+    public GameObject princess2; // Referensi ke objek putri kedua (jika ada)
+    public PlayerMovement playerMovement; // Referensi ke PlayerMovement
     public Camera mainCamera; // Referensi ke kamera utama
+
+    
 
     public Camera jembatanCamera; // Referensi ke kamera jembatan
 
@@ -55,6 +61,9 @@ public class BangunJembatan : MonoBehaviour
 
     public void GastartBangunJembatan()
     {
+        AudioManager.Instance.PlaySFX("Event", 0); // Mainkan efek suara klik
+        jembatanText.text = ""; // Tampilkan teks jembatan
+        playerMovement.enabled = false; // Nonaktifkan PlayerMovement
         ScoreManager.Instance.TambahPuzzleDiperbaiki(); // Tambah jumlah musuh yang dikalahkan
         uiTransisi.SetActive(true); // Tampilkan UI transisi
         sudahDibangun = true; // Tandai jembatan sudah dibangun
@@ -71,18 +80,23 @@ public class BangunJembatan : MonoBehaviour
 
     private IEnumerator BangunJembatanCoroutine()
     {
-        
+
         jembatancollider.enabled = false; // Nonaktifkan collider jembatan
 
         yield return new WaitForSeconds(2f);
         jembatandibangun.SetActive(true); // Aktifkan objek jembatan yang sudah dibangun
+        princess.SetActive(true); // Aktifkan objek putri
         // Tunggu selama 3 detik
         yield return new WaitForSeconds(4f);
+
+
+        yield return new WaitForSeconds(2f);
         uiTransisi.SetActive(false);
 
         // Sembunyikan UI setelah 3 detik
         uiBangunJembatan.SetActive(false);
-
+        princess.SetActive(false); // Nonaktifkan objek putri
+        princess2.SetActive(false); // Aktifkan objek putri kedua (jika ada)
         mainCamera.gameObject.SetActive(true);
         uiTransisi.SetActive(false); // Tampilkan UI transisi
 
@@ -90,5 +104,7 @@ public class BangunJembatan : MonoBehaviour
 
         // Nonaktifkan kamera jembatan
         jembatanCamera.gameObject.SetActive(false);
+        
+        playerMovement.enabled = true; // Nonaktifkan PlayerMovement
     }
 }

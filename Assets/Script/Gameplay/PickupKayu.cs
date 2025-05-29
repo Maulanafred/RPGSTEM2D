@@ -4,7 +4,7 @@ public class PickupKayu : MonoBehaviour
 {
     public JembatanManager jembatanManager; // Referensi ke JembatanManager
 
-    private GameObject kayuSaatIni; // Referensi kayu yang disentuh
+    private GameObject kayuSaatIni; // Referensi kayu yang disentuhee
 
     void OnCollisionEnter2D(Collision2D collision)
     {
@@ -21,7 +21,7 @@ public class PickupKayu : MonoBehaviour
     {
         if (collision.collider.CompareTag("Player")) // Pastikan yang menyentuh adalah pemain
         {
-                        jembatanManager.buttonAmbilKayu.SetActive(false);
+            jembatanManager.buttonAmbilKayu.SetActive(false);
             jembatanManager.kayuTerdekat = null;
         }
     }

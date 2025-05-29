@@ -94,9 +94,18 @@ public class Mainmenu : MonoBehaviour
         if (isButtonPressed) return;
         isButtonPressed = true;
 
-        StartCoroutine(BackToMenuWithDelay(0.5f)); // Kembali ke menu dengan delay
+        StartCoroutine(BackToMenuWithDelay(0.1f)); // Kembali ke menu dengan delay
 
 
+    }
+
+    public void BukaModul()
+    {
+        if (isButtonPressed) return; // Cegah spamming tombol
+        isButtonPressed = true;
+
+        StartCoroutine(PlaySoundAndOpenPanel(4));
+        StartCoroutine(ResetButtonFlag());
     }
 
     // Kembali ke menu dengan delay
@@ -108,6 +117,7 @@ public class Mainmenu : MonoBehaviour
         panels[1].SetActive(false);
         panels[2].SetActive(false);
         panels[3].SetActive(false);
+        panels[4].SetActive(false); // Kembali ke panel utama
         isButtonPressed = false; // Reset flag setelah kembali ke menu
 
         
@@ -128,16 +138,17 @@ public class Mainmenu : MonoBehaviour
     private IEnumerator PlaySoundAndOpenPanel(int panelIndex)
     {
         AudioManager.Instance.PlaySFX("UI", 1); // Mainkan sound
-        yield return new WaitForSeconds(0.2f); // Tunggu durasi sound (sesuaikan durasi ini)
+        yield return new WaitForSeconds(0f); // Tunggu durasi sound (sesuaikan durasi ini)
         panels[0].SetActive(panelIndex == 0);
         panels[1].SetActive(panelIndex == 1);
         panels[2].SetActive(panelIndex == 2);
         panels[3].SetActive(panelIndex == 3);
+        panels[4].SetActive(panelIndex == 4); // Aktifkan panel yang sesuai
     }
 
     private IEnumerator ResetButtonFlag()
     {
-        yield return new WaitForSeconds(0.5f); // Sesuaikan durasi ini jika diperlukan
+        yield return new WaitForSeconds(0.2f); // Sesuaikan durasi ini jika diperlukan
         isButtonPressed = false; // Reset flag setelah durasi tertentu
     }
 

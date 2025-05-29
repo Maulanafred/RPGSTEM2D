@@ -209,7 +209,7 @@ IEnumerator Attack(Vector2 attackDir)
         float angle = Mathf.Atan2(attackDir.y, attackDir.x) * Mathf.Rad2Deg;
 
         // --- Posisi dan rotasi Staff ---
-        float staffOffset = 1.5f;
+        float staffOffset = 1f;
         Vector3 staffPos = transform.position + (Vector3)(attackDir * staffOffset);
         staffObject.transform.position = staffPos;
         staffObject.transform.rotation = Quaternion.Euler(0, 0, angle);

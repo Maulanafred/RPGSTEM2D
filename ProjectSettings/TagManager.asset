@@ -9,6 +9,7 @@ TagManager:
   - Wood
   - Slime
   - Mushroom
+  - hewantrigger
   layers:
   - Default
   - TransparentFX
@@ -45,4 +46,10 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Karakter
+    uniqueID: 1965534847
+    locked: 0
+  - name: Environment
+    uniqueID: 1760567717
     locked: 0

@@ -273,7 +273,7 @@ public class AudioManager : MonoBehaviour
             // AudioClip clip = source.clip; // Tidak perlu jika AudioSource sudah punya clip
             if (source.clip != null)
             {
-                source.PlayOneShot(source.clip);
+                source.Play();
             } else {
                 Debug.LogWarning($"SFX {groupName}[{index}] tidak memiliki AudioClip.");
             }
